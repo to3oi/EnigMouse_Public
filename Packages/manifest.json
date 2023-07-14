@@ -2,10 +2,13 @@
   "dependencies": {
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git?path=Assets/Plugins/UniRx/Scripts",
+    "com.to3oi.unityeasynet": "https://github.com/to3oi/UnityEasyNet.git?path=Assets/Plugins/UnityEasyNet/Scripts",
     "com.unity.collab-proxy": "2.0.0",
     "com.unity.ide.rider": "3.0.18",
     "com.unity.ide.visualstudio": "2.0.17",
     "com.unity.ide.vscode": "1.2.5",
+    "com.unity.memoryprofiler": "0.7.1-preview.1",
+    "com.unity.recorder": "3.0.3",
     "com.unity.render-pipelines.universal": "12.1.10",
     "com.unity.test-framework": "1.1.31",
     "com.unity.textmeshpro": "3.0.6",

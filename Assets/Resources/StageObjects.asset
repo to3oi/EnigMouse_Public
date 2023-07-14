@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ce15e43c4f1a914180ff9bc6595a3f6, type: 3}
+  m_Name: StageObjects
+  m_EditorClassIdentifier: 
+  List:
+  - ObjectType: 100
+    GameObject: {fileID: 1065479089888446695, guid: cd28167731c9bb74bbf27460f5df9d97,
+      type: 3}
+  - ObjectType: 101
+    GameObject: {fileID: 2731206109009434577, guid: 9274f7b9988ecd74193831be3cd30610,
+      type: 3}
+  - ObjectType: 102
+    GameObject: {fileID: 6840101785330092039, guid: 23a9da26d921cde4d92cd1d0c6fc7564,
+      type: 3}
+  - ObjectType: 103
+    GameObject: {fileID: 702174789923511579, guid: 8862ddb4d5352874b9b74c88747201bc,
+      type: 3}
+  - ObjectType: 104
+    GameObject: {fileID: 3928698137616281688, guid: 1ddfa0b9596226041afc49d340453f90,
+      type: 3}
+  - ObjectType: 105
+    GameObject: {fileID: 5785145507243265622, guid: 23d09585cf85de641a5978595e167dc9,
+      type: 3}
+  - ObjectType: 106
+    GameObject: {fileID: 3928698137616281688, guid: 1ddfa0b9596226041afc49d340453f90,
+      type: 3}
+  - ObjectType: 107
+    GameObject: {fileID: 3928698137616281688, guid: 4cb61175cd2d73e4d9e026383daef564,
+      type: 3}
+  - ObjectType: 108
+    GameObject: {fileID: 3289261789493436192, guid: 87a403e49b8dc064486661688b45a791,
+      type: 3}
+  - ObjectType: 109
+    GameObject: {fileID: 4906184378899538321, guid: ef44ad612b6e6544a89a970f05b2f62f,
+      type: 3}
+  - ObjectType: 110
+    GameObject: {fileID: 6790703411882935263, guid: 0dd8588fc617a9e48879040079d488df,
+      type: 3}
+  - ObjectType: 111
+    GameObject: {fileID: 3289261789493436192, guid: 87a403e49b8dc064486661688b45a791,
+      type: 3}
+  - ObjectType: 112
+    GameObject: {fileID: 3928698137616281688, guid: 1ddfa0b9596226041afc49d340453f90,
+      type: 3}
+  - ObjectType: 190
+    GameObject: {fileID: 8614816883185074479, guid: 6ef81f7b6261e604aa8979d269b940ab,
+      type: 3}
