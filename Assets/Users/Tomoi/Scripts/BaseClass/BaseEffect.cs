@@ -13,13 +13,21 @@ public class BaseEffect : MonoBehaviour
         transform.position = position;
         transform.localRotation = rotation;
         Effect.Play();
+    }  
+    public void Play(Vector3 position,Quaternion rotation,Transform parent)
+    {
+        transform.parent = parent;
+        transform.localPosition = position;
+        transform.localRotation = rotation;
+        Effect.Play();
     }
     
     /// <summary>
     /// エフェクト停止時の処理
     /// </summary>
-    public virtual void OnParticleSystemStopped() 
+    public virtual void OnParticleSystemStopped()
     {
+        transform.parent = null;
         EffectManager.Instance.ReturnPool(EffectType,this);
     }
 }

@@ -2,12 +2,6 @@
 
 public class StageObjectRock : BaseStageObject
 {
-    public float stageObjectMagma;
-
-    private void Start()
-    {
-    }
-
     public StageObjectRock(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
     {
     }

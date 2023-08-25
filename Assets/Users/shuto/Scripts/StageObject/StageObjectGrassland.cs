@@ -34,7 +34,7 @@ public class StageObjectGrassland : BaseStageObject
         {
             this.gameObject.SetActive(false);
             //StageObjectWoodを呼び出す
-            stageObjectWood.stageObjectGrassland = 15f;
+            //stageObjectWood.stageObjectGrassland = 15f;
             stageObjectType = StageObjectType.Wood;
             return true;
         }

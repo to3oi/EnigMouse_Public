@@ -36,11 +36,19 @@ public class EffectManager : SingletonMonoBehaviour<EffectManager>
         }).AddTo(this);
     }
 
-    public void PlayEffect(EffectType effectType,Vector3 position,Quaternion rotation)
+    public BaseEffect PlayEffect(EffectType effectType,Vector3 position,Quaternion rotation)
     {
         var baseEffect = _effectDictionary[effectType].pool.Rent();
         
         baseEffect.Play(position,rotation);
+        return baseEffect;
+    }  
+    public BaseEffect PlayEffect(EffectType effectType,Vector3 position,Quaternion rotation,Transform parent)
+    {
+        var baseEffect = _effectDictionary[effectType].pool.Rent();
+        
+        baseEffect.Play(position,rotation,parent);
+        return baseEffect;
     }
     
     /// <summary>

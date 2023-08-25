@@ -1,7 +1,8 @@
+using DG.Tweening;
 using System.Collections;
 using UnityEngine;
-using DG.Tweening;
-public class Mouse : MonoBehaviour
+
+public class Mouse : SingletonMonoBehaviour<Mouse>
 {
     private bool _keyFlag = false;                  //falseで鍵未所持状態
     private bool _destinationarea = false;          //移動先の判定trueで移動可能
@@ -14,12 +15,10 @@ public class Mouse : MonoBehaviour
     private Vector3 startPos;                       //初期座標
     private Vector3 mousePos;                       //現在座標
     private Vector3 destinationPos;                 //移動先の座標
-    [HideInInspector]public Vector3 MousePosition;  //受け渡し用のマウスの座標
-
+    public Vector3 MousePosition;                   //受け渡し用のマウスの座標
     private StageManager stageManager;
+    private DynamicStageObject dynamicStageObject;
     private Animator anim;
-
-    public bool debugmode = true;
     public Mouse(Vector3 pos, float rotation)
     {
         startPos = pos;//スタート時の自身の座標を保持する
@@ -29,15 +28,17 @@ public class Mouse : MonoBehaviour
         transform.rotation = Quaternion.EulerRotation(0, rotation, 0);
         startQuaternion = transform.rotation;
     }
+    protected override void Awake()
+    {
+        base.Awake();
+    }
     void Start()
     {
         stageManager = StageManager.Instance;
         anim = GetComponent<Animator>();
         //デバッグ用
-        //startPos = transform.position;//スタート時の自身の座標を保持する
-        //startPos = Vector3.zero;
         startPos = transform.position;
-        mousePos = new Vector3(startPos.x, 0, startPos.z-1);//座標調整でZ座標を-1している
+        mousePos = new Vector3(startPos.x, 0, startPos.z - 1);//座標調整でZ座標を-1している
         MousePosition = mousePos;
         destinationPos = mousePos;//移動先の座標を現在の座標に設定
 
@@ -47,27 +48,24 @@ public class Mouse : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!isinput&&debugmode)
+        //デバッグ用
+        if (Input.GetKeyDown(KeyCode.RightShift) && !isinput)
         {
-            //デバッグ用
-            if (Input.GetKeyDown(KeyCode.RightShift))
-            {
-                MouseAct();
-            }
+            MouseAct();
         }
     }
-    public void MouseAct()//マウスの移動と回転
+    /// <summary>
+    /// ネズミの移動
+    /// </summary>
+    public void MouseAct()
     {
         isinput = true;
         _destinationarea = false;
         anim.SetTrigger("Run");
         //自分のいるマスのイベントを処理
-        AreaEvent(stageManager.GetStageObjectType((int)mousePos.x, (int)mousePos.z), true);
+        MouseAreaEvent(stageManager.GetStageObjectType((int)mousePos.x, (int)mousePos.z));
         //移動先の探索と移動
         MouseMove();
-
-        //ターン終了用の関数を呼び出す
-        
     }
     private void RouteSearch()//移動先の決定
     {
@@ -94,15 +92,16 @@ public class Mouse : MonoBehaviour
     private void MouseMove()
     {
         destinationPos = mousePos;
+        var turncomp = false;
         RouteSearch();
         if ((destinationPos.x >= 0 && destinationPos.x <= 5) && (destinationPos.z <= 5 && destinationPos.z >= 0))
         {
-            AreaEvent(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z), false);
+            DestinationAreaEvent(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z));
             if (_destinationarea && _rotateCount < 4)
             {
                 var dif = destinationPos - mousePos; //現在座標と移動先の差
                 for (int i = 0; i < 5; i++)//直線状の移動できるマスを検索する
-                {                  
+                {
                     dif = destinationPos - mousePos;
                     if (!_destinationarea || stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == null)
                     {
@@ -116,9 +115,17 @@ public class Mouse : MonoBehaviour
                         }
                         break;
                     }
-                    else if(_damage&&_destinationarea)
+                    else if (_damage && _destinationarea)
                     {
-                        Debug.Log("死亡");
+                        break;
+                    }
+                    else if (_keyFlag && stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.MagicCircle)//鍵を持っている状態でゴールに触ったら其の時点で移動処理を終了
+                    {
+                        break;
+                    }
+                    else if (stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.Key && !_keyFlag)
+                    {
+                        turncomp = true;
                         break;
                     }
                     RouteSearch();
@@ -126,29 +133,35 @@ public class Mouse : MonoBehaviour
                     {
                         if (dif.x != 0)//x方向に移動するとき
                         {
-                            dif.x = Mathf.Sign(dif.x) *(Mathf.Abs(dif.x));
+                            dif.x = Mathf.Sign(dif.x) * (Mathf.Abs(dif.x));
                         }
                         else if (dif.z != 0)//z方向に移動するとき
                         {
-                            dif.z = Mathf.Sign(dif.z) *(Mathf.Abs(dif.z));
+                            dif.z = Mathf.Sign(dif.z) * (Mathf.Abs(dif.z));
                         }
                         break;
                     }
-                    AreaEvent(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z), false);//移動先のマスの種類を確認
-                }                
+                    DestinationAreaEvent(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z));
+                }
                 transform.DOMove(dif, runSpead).SetEase(Ease.InOutCubic).SetRelative(true).OnComplete(() =>//現在の座標と目的の座標を比較し、差を代入して移動させる
                 {
                     mousePos += dif;//座標を更新
+                    destinationPos = mousePos;
                     MousePosition = mousePos;
-                    AreaEvent(stageManager.GetStageObjectType((int)mousePos.x, (int)mousePos.z), true);
+                    MouseAreaEvent(stageManager.GetStageObjectType((int)mousePos.x, (int)mousePos.z));
                     _destinationarea = false;
                     isinput = false;
-                });               
+                    if (!turncomp && !_damage)
+                    {
+                        //ターン終了用の関数を呼び出す
+                        GameManager.Instance.TurnComplete();
+                    }
+                });
                 _rotateCount = 0;//回転の回数リセット
             }
             else if (_rotateCount >= 4)
             {
-                Debug.Log("RotateCount" + _rotateCount);
+                Debug.LogError("移動先がありません");
                 anim.SetTrigger("Idle");
             }
             else
@@ -178,260 +191,135 @@ public class Mouse : MonoBehaviour
         transform.position = startPos;
         transform.rotation = startQuaternion;
     }
-    private void KeyGet()
+    /// <summary>
+    /// 鍵の取得
+    /// </summary>
+    public IEnumerator KeyGet()
     {
-        if(_keyFlag)
+        if (!_keyFlag)
+        {
+            RouteSearch();
+            if ((destinationPos.x >= 0 && destinationPos.x <= 5) && (destinationPos.z <= 5 && destinationPos.z >= 0))
+            {
+                DestinationAreaEvent(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z));
+                if (_destinationarea)
+                {
+                    anim.SetTrigger("KeyGet");
+                    yield return new WaitForSeconds(1f);
+                    anim.SetTrigger("Idle");
+                    destinationPos = mousePos;//一度検索結果を破棄
+                    yield return new WaitForSeconds(2f);
+                    MouseMove();
+                }
+            }
+            //ここに鍵取得の演出をいれる
+
+            _keyFlag = true;
+        }
+        else
         {
             Debug.Log("鍵取得済み");
         }
-        _keyFlag = true;
-
+        yield return null;
     }
-    //死亡時の処理
+    /// <summary>
+    /// ゲームクリアの判定
+    /// </summary>
+
+    public void ClearChack()
+    {
+        if (_keyFlag)
+        {
+            Debug.Log("ゲームクリア");
+        }
+        else
+        {
+            Debug.Log("鍵を持っていません");
+        }
+    }
+    /// <summary>
+    /// 死亡時の処理
+    /// </summary>
     public IEnumerator Death()
     {
         anim.SetTrigger("Death");
         _keyFlag = false;
         _damage = false;
         yield return new WaitForSeconds(2f);
+        GameManager.Instance.TurnComplete();
         gameObject.SetActive(false);
     }
-    //それぞれのマスごとの処理を行う。マウスの座標ならtrue、移動先の座標として使用するならfalse
-    private void AreaEvent(StageObjectType? stagetype, bool mouse)
+    private async void MouseAreaEvent(StageObjectType? stagetype)
     {
-        var pos = transform.position;
-        var obj = transform.transform;
-        if (mouse)
+        var pos = mousePos;
+        dynamicStageObject = stageManager.GetDynamicStageObject((int)pos.x, (int)Mathf.Abs(pos.z - 5));
+        if (stagetype == null)
         {
-            pos = mousePos;
-        }
-        else
-        {
-            pos = destinationPos;
-        }
-        if (!debugmode)
-        {
-            obj = GameObject.Find($"[{Mathf.Abs(pos.z - 6)},{pos.x}]").transform.GetChild(0);
-        }
-        if (stagetype == null) {
             Debug.LogWarning("AreaEvent is null");
-            return; }
-        if(mouse)
+            return;
+        }
+        if (dynamicStageObject.isValidMove())
         {
-            Debug.Log("mouse:"+stagetype);
+            switch (stagetype)
+            {
+                case StageObjectType.Key:
+                case StageObjectType.MagicCircle:
+                case StageObjectType.Magma:
+                case StageObjectType.Abyss:
+                case StageObjectType.Pond:
+                case StageObjectType.Monster:
+                case StageObjectType.Flame:
+                    dynamicStageObject.MoveToCell();
+                    break;
+                case StageObjectType.None:
+                case StageObjectType.Grassland:
+                case StageObjectType.Mouse:
+                    break;
+                default:
+                    Debug.LogError("このエリアには侵入できません");
+                    break;
+            }
         }
         else
         {
-            Debug.Log("destination:"+stagetype);
+            Debug.LogError("このエリアには侵入できません");
         }
-        switch (stagetype)
+    }
+    private void DestinationAreaEvent(StageObjectType? stagetype)
+    {
+        var pos = destinationPos;
+        dynamicStageObject = stageManager.GetDynamicStageObject((int)pos.x, (int)Mathf.Abs(pos.z - 5));
+        if (stagetype == null)
         {
-            case StageObjectType.Magma:
-                if (mouse)
-                {
-                    StartCoroutine(Death());
-                }
-                else
-                {
-                    _destinationarea = true;
+            Debug.LogWarning("AreaEvent is null");
+            return;
+        }
+        if (dynamicStageObject.isValidMove())
+        {
+            _destinationarea = true;
+            switch (stagetype)
+            {
+                case StageObjectType.None:
+                case StageObjectType.Grassland:
+                case StageObjectType.Mouse:
+                case StageObjectType.MagicCircle:
+                case StageObjectType.Key:
+                    break;
+                case StageObjectType.Magma:
+                case StageObjectType.Abyss:
+                case StageObjectType.Pond:
+                case StageObjectType.Monster:
+                case StageObjectType.Flame:
                     _damage = true;
-                }
-
-                break;
-            case StageObjectType.Grassland:
-                if (!mouse)
-                {
-                    _destinationarea = true;
-                }
-                break;
-            case StageObjectType.Wood:
-                if (mouse)
-                {
-                    Debug.LogError("このエリアは進入できません");
-                    Reset();
-                }
-                else
-                {
-                    _destinationarea = false;
-                }
-                break;
-            case StageObjectType.Monster://火があるなら移動可能にする
-                if (mouse)
-                {
-                    StartCoroutine(Death());
-
-                    //各オブジェクトの内容が更新されたら削除する
-                    //if (obj.GetComponent<BaseStageObject>().isValidMove())
-                    //{
-                    //    StartCoroutine(Death());
-                    //}
-                    //else
-                    //{
-                    //    Debug.Log("Monsterは倒れた");
-                    //}
-                }
-                else
-                {
-                    _destinationarea = true;
-                    _damage = true;
-                    //各オブジェクトの内容が更新されたら削除する
-                    //if (!obj.GetComponent<BaseStageObject>().isValidMove())
-                    //{
-                    //    _destinationarea = true;
-                    //    _damage = true;
-                    //}
-                    //else
-                    //{
-                    //    _destinationarea = true;
-                    //    _damage = false;
-                    //}
-                }
-                break;
-            case StageObjectType.Ice://火があるなら移動可能
-                if (mouse)
-                {
-                    Debug.LogError("このエリアは進入できません");
-                    Reset();
-                }
-                else
-                {
-                    _destinationarea = false;
-                }
-
-                break;
-            case StageObjectType.Pond://氷があるなら移動可能
-                if (mouse)
-                {
-                    StartCoroutine(Death());
-                    //各オブジェクトの内容が更新されたら削除する
-                    //if (obj.GetComponent<BaseStageObject>().isValidMove())
-                    //{
-                    //    StartCoroutine(Death());
-                    //}
-                    //else
-                    //{
-                    //    Debug.Log("池で溺れた");
-                    //}
-                }
-                else
-                {
-                    _destinationarea = true;
-                    _damage = true;
-                    //各オブジェクトの内容が更新されたら削除する
-                    //if (!obj.GetComponent<BaseStageObject>().isValidMove())
-                    //{
-                    //    _destinationarea = true;
-                    //    _damage = true;
-                    //}
-                    //else
-                    //{
-                    //    _destinationarea = true;
-                    //    _damage = false;
-                    //}
-                }
-                break;
-            case StageObjectType.Abyss://風があるなら移動可能
-                if (mouse)
-                {
-                    StartCoroutine(Death());
-                    //各オブジェクトの内容が更新されたら削除する
-                    //if (obj.GetComponent<BaseStageObject>().isValidMove())
-                    //{
-                    //    StartCoroutine(Death());
-                    //}
-                    //else
-                    //{
-                    //    Debug.Log("奈落を通り抜けた");
-                    //}
-                }
-                else
-                {
-                    _destinationarea = true;
-                    _damage = true;
-                    //各オブジェクトの内容が更新されたら削除する
-                    //if (!obj.GetComponent<BaseStageObject>().isValidMove())
-                    //{
-                    //    _destinationarea = true;
-                    //    _damage = true;
-                    //}
-                    //else
-                    //{
-                    //    _destinationarea = true;
-                    //    _damage = false;
-                    //}
-                }
-                break;
-            case StageObjectType.Flame://水があるなら移動可能
-                if (mouse)
-                {
-                    StartCoroutine(Death());
-                }
-                else
-                {
-                    _destinationarea = true;
-                    _damage = true;
-                }
-                break;
-            case StageObjectType.Rock:
-                if (mouse)
-                {
-                    Debug.LogError("このエリアは進入できません");
-                    Reset();
-                }
-                else
-                {
-                    _destinationarea = false;
-                }
-
-                break;
-            case StageObjectType.Key:
-                if (mouse)
-                {
-                    KeyGet();
-                    Debug.Log("KeyFlag:"+_keyFlag);
-                }
-                else
-                {
-                    KeyGet();
-                    Debug.Log("KeyFlag:" + _keyFlag);
-                    _destinationarea = true;
-                }
-                break;
-            case StageObjectType.MagicCircle:
-                if (_keyFlag && mouse)
-                {
-                    Debug.Log("ゲームクリア");
-                }
-                else if (!_keyFlag && mouse)
-                {
-                    Debug.Log("鍵がありません");
-                }
-                else if (!mouse)
-                {
-                    _destinationarea = true;
-                }
-
-                break;
-            case StageObjectType.Mouse:
-                if (!mouse)
-                {
-                    _destinationarea = true;
-                }
-                break;
-
-            case StageObjectType.None:
-                if (!mouse)
-                {
-                    _destinationarea = true;
-                }
-                break;
-            default:
-                Debug.Log("このstagetypeは存在しません");
-                if (!mouse)
-                {    
-                    _destinationarea = false; 
-                }
-                break;
+                    break;
+                default:
+                    Debug.LogError("このエリアには侵入できません");
+                    break;
+            }
+        }
+        else
+        {
+            _destinationarea = false;
         }
     }
 }

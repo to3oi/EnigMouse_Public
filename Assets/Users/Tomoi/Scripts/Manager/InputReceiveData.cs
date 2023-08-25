@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using MessagePack;
 using UnityEasyNet;
@@ -10,8 +9,18 @@ using UnityEngine;
 public class InputReceiveData : IInputDataHandler
 {
     private UDPReceiver mUDPReceiver = null;
-    
+
     private List<ReceiveData> deserializedList = new List<ReceiveData>();
+    
+    /// <summary>
+    /// 前のフレームまでに受信したデータが存在するときにture
+    /// </summary>
+    public bool isReceived { get;private set; }= false;
+
+    public void ResetIsReceived()
+    {
+        isReceived = false;
+    }
     void OnReceive(byte[] bytes)
     {
         //Debug.Log("OnReceive");
@@ -20,27 +29,45 @@ public class InputReceiveData : IInputDataHandler
         {
             return;
         }
+        isReceived = true;
         //Debug.Log("デシリアライズ");
         deserializedList.Clear();
         // デシリアライズ
-        deserializedList  = MessagePackSerializer.Deserialize<List<ReceiveData>>(bytes);
+        deserializedList = MessagePackSerializer.Deserialize<List<ReceiveData>>(bytes);
     }
-
-    private InputData[] _inputArray = new InputData[]{new InputData()};
+    List<InputData> oInputData = new List<InputData>();
 
     public override InputData[] UpdateInputArrays()
     {
-        //配列をクリア
-        Array.Clear(_inputArray, 0, _inputArray.Length);
+        //初期化
+        ResetMagicList();
+        oInputData.Clear();
 
-        _inputArray = new InputData[deserializedList.Count];
-
-        for (int i = 0; i < deserializedList.Count; i++)
+        //信頼度でソート
+        deserializedList.Sort((a, b) => a.Confidence.CompareTo(b));
+        foreach (var receiveData in deserializedList)
         {
-            _inputArray[i] = new InputData(convertLabel2MagicType(deserializedList[i].Label),
-                new Vector2(deserializedList[i].PosX, deserializedList[i].PosY));
+            var magicType = convertLabel2MagicType(receiveData.Label);
+
+            //Confidenceの値が現在のreceiveDataが上回っていたら更新
+            if (MagicList[(int)magicType].Item2.Confidence <= receiveData.Confidence)
+            {
+                MagicList[(int)magicType] = (MagicList[(int)magicType].Item1, receiveData);
+            }
         }
-        return _inputArray;
+        
+        for (var i = 1; i < MagicList.Count; i++)
+        {
+            //物体検出の結果の信頼度が50%以上のときInputデータとして扱う
+            if (0.5f <= MagicList[i].Item2.Confidence)
+            {
+                InputData input = new InputData(convertLabel2MagicType(MagicList[i].Item2.Label),
+                    new Vector2(MagicList[i].Item2.PosX, MagicList[i].Item2.PosY));
+                oInputData.Add(input);
+            }
+        }
+
+        return oInputData.ToArray();
     }
 
     public override void Init()
@@ -56,13 +83,39 @@ public class InputReceiveData : IInputDataHandler
             .WithCompression(MessagePack.MessagePackCompression.Lz4BlockArray) // LZ4 圧縮利用
             .WithResolver(MessagePack.Resolvers.StaticCompositeResolver.Instance);
         MessagePack.MessagePackSerializer.DefaultOptions = option;
-        
+
         mUDPReceiver = new UDPReceiver(12001, OnReceive);
+        ResetMagicList();
     }
+
+    /// <summary>
+    /// 魔法の種類ごとのReceiveDataの結果
+    /// </summary>
+    private List<(MagicType, ReceiveData)> MagicList = new List<(MagicType, ReceiveData)>();
+
+    private void ResetMagicList()
+    {
+        MagicList.Clear();
+        MagicList = new List<(MagicType, ReceiveData)>()
+        {
+            (MagicType.NoneMagic, new ReceiveData("", 0, 0, 0)),
+            (MagicType.Fire, new ReceiveData("", 0, 0, 0)),
+            (MagicType.Water, new ReceiveData("", 0, 0, 0)),
+            (MagicType.Ice, new ReceiveData("", 0, 0, 0)),
+            (MagicType.Wind, new ReceiveData("", 0, 0, 0))
+        };
+    }
+
 
     private MagicType convertLabel2MagicType(string label)
     {
-        //TODO:ラベルの変換
-        return MagicType.Fire;
+        return label switch
+        {
+            "Cross" => MagicType.Fire,
+            "Othello" => MagicType.Water,
+            "Ring" => MagicType.Ice,
+            "Square" => MagicType.Wind,
+            _ => MagicType.NoneMagic
+        };
     }
 }

@@ -3,7 +3,8 @@ using UnityEngine;
 
 public class TestEffectManager : MonoBehaviour
 {
-    [SerializeField] private MagicType _magicType = MagicType.NonMagic;
+    [SerializeField] private MagicType _magicType = MagicType.NoneMagic;
+    [SerializeField] private EffectType _effectType = EffectType.Magic_None;
 
     private void OnGUI()
     {
@@ -11,10 +12,18 @@ public class TestEffectManager : MonoBehaviour
         {
             PlayEffect();
         }
+        
+        if (GUILayout.Button("エフェクトテスト2"))
+        {
+            PlayEffect2();
+        }
     }
-    [ContextMenu("PlayEffect")]
     private void PlayEffect()
     {
         EffectManager.Instance.PlayEffect((EffectType)_magicType,Vector3.zero,quaternion.identity);
+    } 
+    private void PlayEffect2()
+    {
+        EffectManager.Instance.PlayEffect(_effectType,Vector3.zero,quaternion.identity);
     }
 }

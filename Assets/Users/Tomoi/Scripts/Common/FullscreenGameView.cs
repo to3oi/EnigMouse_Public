@@ -22,7 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#if UNITY_EDITOR
+//必要なときは&& FALSEを削除して使用する
+#if UNITY_EDITOR && FALSE
 
 using System;
 using System.Reflection;

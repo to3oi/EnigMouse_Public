@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UniRx;
 
 public class StageObjectKey : BaseStageObject
 {
@@ -13,7 +15,7 @@ public class StageObjectKey : BaseStageObject
         this.gameObject.SetActive(true);
 
         //StageObjectNoneを取得
-        stageObjectNone = Object.GetComponent<StageObjectNone>();
+        //stageObjectNone = Object.GetComponent<StageObjectNone>();
     }
 
     public StageObjectKey(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
@@ -22,14 +24,14 @@ public class StageObjectKey : BaseStageObject
         this.gameObject.SetActive(true);
 
         //StageObjectNoneを取得
-        stageObjectNone = Object.GetComponent<StageObjectNone>();
+        //stageObjectNone = Object.GetComponent<StageObjectNone>();   
     }
 
     public void KeyGet()
     {
             this.gameObject.SetActive(false);
             //StageObjectNoneを取得
-            stageObjectNone.stageObjectKey = 15f;
+            //stageObjectNone.stageObjectKey = 15f;
     }
 
     public override bool isValidMove()
@@ -42,5 +44,10 @@ public class StageObjectKey : BaseStageObject
     {
         //初期化する
         this.gameObject.SetActive(true);
+    }
+    public override async UniTask MoveToCell()
+    {
+        await Mouse.Instance.KeyGet();
+        
     }
 }

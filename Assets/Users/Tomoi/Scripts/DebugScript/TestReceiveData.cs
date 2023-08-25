@@ -63,7 +63,7 @@ public class TestReceiveData : MonoBehaviour
             var m =(float) 1080 / 600;
             var offsetX = (1920 - 640 * m) / 2;
             Vector2 pos = new Vector2(result.PosX * m + offsetX, result.PosY * m);            
-            GameManager.Instance.TestMagicPoint(pos,MagicType.Fire);
+            //GameManager.Instance.TestMagicPoint(pos,MagicType.Fire);
         }
     }
 }

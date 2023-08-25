@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -49,12 +50,13 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
         new[] { 10, 9, 8, 7, 6, 5 }
     };
 
-    void Start()
+    protected override  void Awake()
     {
+        base.Awake();
+        
         stageRoot = new GameObject("StageRoot");
 
         loadStageMap();
-        CreateStage();
     }
 
     /// <summary>
@@ -91,7 +93,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     /// ステージの生成
     /// </summary>
     [ContextMenu("CreateStage")]
-    public void CreateStage()
+    public async UniTask CreateStage()
     {
         //DynamicStageObjectListの初期化
         DynamicStageObjectList = new List<List<DynamicStageObject>>(6);
@@ -134,6 +136,26 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
                 DynamicStageObjectList[y][x] = dynamicStageObject;
             }
         }
+        //InitAnimation
+        List<UniTask> task = new List<UniTask>();
+        foreach (var listY in DynamicStageObjectList)
+        {
+            foreach (var dynamicStageObject in listY)
+            {
+                task.Add( dynamicStageObject.InitStageAnimation());
+            }            
+        }
+        
+        //すべてのオブジェクトが落ちるのを待つ
+        await UniTask.WhenAll(task);
+        
+        foreach (var listY in DynamicStageObjectList)
+        {
+            foreach (var dynamicStageObject in listY)
+            {
+                dynamicStageObject.InitAnimation().Forget();
+            }            
+        }
     }
 
     /// <summary>
@@ -145,8 +167,8 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     public static Vector3 GetWorldPosition(int x, int y)
     {
         return new Vector3(x * offset, 0, Mathf.Abs(y - 6) * offset);
-    } 
-    
+    }
+
     /// <summary>
     /// ステージ上に存在するDynamicStageObjectを引数x,yで取得する
     /// </summary>
@@ -157,7 +179,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     {
         return DynamicStageObjectList[y][x];
     }
-    
+
     /// <summary>
     /// 修正中
     /// ステージの情報を引数の値で更新する

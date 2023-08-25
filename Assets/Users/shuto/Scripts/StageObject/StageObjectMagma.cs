@@ -1,30 +1,9 @@
 ﻿using UnityEngine;
-
+using Cysharp.Threading.Tasks;
 public class StageObjectMagma : BaseStageObject
 {
-    GameObject Object;
-    StageObjectRock stageObjectRock;
-
-    private void Start()
-    {
-        //最初、ネズミが通れる
-        this.gameObject.SetActive(true);
-
-        //StageObjectRockを取得
-        Object = StageObjectList.Instance.GetGameObject(StageObjectType.Rock);
-
-        stageObjectRock = Object.GetComponent<StageObjectRock>();
-    }
-
     public StageObjectMagma(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
     {
-        //最初、ネズミが通れる
-        this.gameObject.SetActive(true);
-
-        //StageObjectRockを取得
-        Object = StageObjectList.Instance.GetGameObject(StageObjectType.Rock);
-
-        stageObjectRock = Object.GetComponent<StageObjectRock>();
     }
 
     public override bool HitMagic(MagicType type, Vector2 direction, out StageObjectType stageObjectType)
@@ -32,10 +11,6 @@ public class StageObjectMagma : BaseStageObject
         //水魔法を使うことで通れなくする
         if (type == MagicType.Water)
         {
-            this.gameObject.SetActive(false);
-            //StageObjectRockを呼び出す
-            stageObjectRock.stageObjectMagma = 15f;
-            
             stageObjectType = StageObjectType.Rock;
             return true;
         }
@@ -50,9 +25,9 @@ public class StageObjectMagma : BaseStageObject
         return true;
     }
 
-    public override void Reset()
+    public override async UniTask MoveToCell()
     {
-        //初期化する
-        this.gameObject.SetActive(true);
+        await Mouse.Instance.Death();
+
     }
 }

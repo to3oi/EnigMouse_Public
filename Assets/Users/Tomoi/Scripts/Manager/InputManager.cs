@@ -1,31 +1,45 @@
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks.Triggers;
 using UnityEngine;
 
-class InputMagicData
+public class MagicData
 {
     /// <summary>
-    /// 前回座標を更新したときの座標
+    /// 前のフレームの座標
     /// </summary>
-    public Vector2 lastPos = Vector2.zero;
+    public Vector2 LastFramePosition = Vector2.zero;
+
     /// <summary>
-    /// 現在静止しているか
+    /// 停止を開始した位置
+    /// </summary>
+    public Vector2 StopPosition = Vector2.zero;
+
+    /// <summary>
+    /// 現在停止しているか
     /// </summary>
     public bool isStop = false;
+
     /// <summary>
-    /// 静止を開始した時間
+    /// 停止を開始した時間
     /// </summary>
-    public float StopTime = 0f;
+    public float StopStartTime = 0;
+
     /// <summary>
-    /// 魔法発動中か
+    /// Initを実行しているか
+    /// </summary>
+    public bool isInited = false;
+
+    /// <summary>
+    /// 魔法の発動状態
     /// </summary>
     public bool isMagicActive = false;
+
     /// <summary>
-    /// 魔法発動前の座標
+    /// 魔法発動直前の座標
     /// </summary>
-    public Vector2 lastPosMagicActive = Vector2.zero;
+    public Vector2 LastPosMagicActive = Vector2.zero;
+
     /// <summary>
-    /// 魔法を使用済みか
+    /// 魔法発動済みか
     /// </summary>
     public bool isUsedMagic = false;
 }
@@ -36,7 +50,7 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     /// 静止許容距離
     /// </summary>
     [SerializeField] private float _staticCapacity = 7.5f;
-    
+
     /// <summary>
     /// 魔法発動時に魔法の発動方向を指定する距離
     /// </summary>
@@ -48,63 +62,93 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     [SerializeField] private float _staticDuration = 2.0f;
 
     /// <summary>
+    /// 魔法陣作成までの待機時間
+    /// </summary>
+    [SerializeField] private float _delayInitMagicCircle = 0.3f;
+
+    /// <summary>
+    /// 魔法発動時に移動させる距離
+    /// </summary>
+    [SerializeField] private float _magicActivationRange = 5f;
+
+    /// <summary>
     /// デバッグ用
     /// </summary>
     private IInputDataHandler _inputMouse = new InputMouse();
-    
-    
-    private IInputDataHandler _inputReceiveData = new InputReceiveData();
 
-    private InputData[] _inputData;
+    private InputReceiveData _inputReceiveData = new InputReceiveData();
 
-    //発動する魔法の移動方向を取得するための変数
-    private Dictionary<MagicType, InputMagicData> _inputMagicDataDictionary =
-        new Dictionary<MagicType, InputMagicData>()
-        {
-            { MagicType.NonMagic, new InputMagicData() },
-            { MagicType.Fire, new InputMagicData() },
-            { MagicType.Water, new InputMagicData() },
-            { MagicType.Ice, new InputMagicData() },
-            { MagicType.Wind, new InputMagicData() }
-        };
+    /// <summary>
+    /// trueのとき入力をマウスで行う
+    /// </summary>
+    [SerializeField] private bool isDebugInput =
+# if UNITY_EDITOR
+        true;
+# else
+    false;
+#endif
+    private bool isUpdateInputData = false;
 
-    private void ResetInputMagicDataDictionary()
+
+    private InputData[] _inputDatas;
+
+    private Dictionary<MagicType, MagicData>
+        MagicDataDictionary = new Dictionary<MagicType, MagicData>();
+
+    /// <summary>
+    /// checkMagicType今のフレームにMagicTypeごとのInputが存在するか保持する変数
+    /// </summary>
+    private bool[] checkMagicType;
+
+    private void ResetMagicDataDictionary()
     {
-        _inputMagicDataDictionary.Clear();
-        _inputMagicDataDictionary = new Dictionary<MagicType, InputMagicData>()
-        {
-            { MagicType.NonMagic, new InputMagicData() },
-            { MagicType.Fire, new InputMagicData() },
-            { MagicType.Water, new InputMagicData() },
-            { MagicType.Ice, new InputMagicData() },
-            { MagicType.Wind, new InputMagicData() }
-        };
+        MagicDataDictionary.Clear();
+        MagicDataDictionary =
+            new Dictionary<MagicType, MagicData>()
+            {
+                { MagicType.NoneMagic, new MagicData() },
+                { MagicType.Fire, new MagicData() },
+                { MagicType.Water, new MagicData() },
+                { MagicType.Ice, new MagicData() },
+                { MagicType.Wind, new MagicData() }
+            };
     }
 
     protected override void Awake()
     {
         base.Awake();
+        //初期化
+        checkMagicType = new[] { false, false, false, false, false };
         _inputReceiveData.Init();
-        ResetInputMagicDataDictionary();
+        ResetMagicDataDictionary();
     }
 
-    private bool a = false;
+
     private void Update()
     {
-        
-        //入力データの取得
-        //デバッグ用にUpdateでマウスの座標を処理
-        if (a)
+        if (isDebugInput)
         {
-            //UpdateInputDataArrays(_inputMouse);
-            UpdateInputDataArrays(_inputReceiveData);
-            a = false;
+            //入力データの取得
+            //デバッグ用にUpdateでマウスの座標を処理
+            if (isUpdateInputData)
+            {
+                UpdateInputDataArrays(_inputMouse);
+                isUpdateInputData = false;
+            }
+            else
+            {
+                isUpdateInputData = true;
+            }
         }
         else
         {
-            a = true;
+            //データを受信した次のフレームでUpdateInputDataArraysを実行する
+            if (_inputReceiveData.isReceived)
+            {
+                _inputReceiveData.ResetIsReceived();
+                UpdateInputDataArrays(_inputReceiveData);
+            }
         }
-        //Debug.Log($"data MagicType{_inputData[0].MagicType.ToString()}, Position{_inputData[0].Pos} , Static {_inputMagicDataDictionary[_inputData[0].MagicType].isStop}");
     }
 
     /// <summary>
@@ -114,91 +158,135 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     public void UpdateInputDataArrays(IInputDataHandler inputDataHandler)
     {
         //入力される座標を取得
-        _inputData = inputDataHandler.UpdateInputArrays();
+        //入力されるMagicTypeの種類は一意である
+        //ただし、入力される順番とすべての魔法が入力されているかは保証されない
+        _inputDatas = inputDataHandler.UpdateInputArrays();
 
-        for (int i = 0; i < _inputData.Length; i++)
+        /*//初期化
+        for (int index = 0; index < checkMagicType.Length; index++)
         {
-            //停止とみなす距離の範囲内
-            if (Vector2.Distance(_inputMagicDataDictionary[_inputData[i].MagicType].lastPos, _inputData[i].Pos) <=
-                _staticCapacity)
+            checkMagicType[index] = false;
+        }*/
+
+        for (int inputIndex = 0; inputIndex < _inputDatas.Length; inputIndex++)
+        {
+            //コードが長くなるので変数で保持
+            var inputData = _inputDatas[inputIndex];
+            var magicData = MagicDataDictionary[inputData.MagicType];
+
+            checkMagicType[(int)inputData.MagicType] = true;
+
+            //静止判定
+            //isInitedがTrueのときは距離の判定をLastFramePositionではなくStopPositionで行う
+
+            if (Vector2.Distance(magicData.isInited ? magicData.StopPosition : magicData.LastFramePosition,
+                    _inputDatas[inputIndex].Pos) <= _staticCapacity)
             {
-                //停止してから一定時間がたち、尚且つ魔法が発動済みではない場合
-                if (_inputMagicDataDictionary[_inputData[i].MagicType].StopTime + _staticDuration <=
-                    Time.realtimeSinceStartup && !_inputMagicDataDictionary[_inputData[i].MagicType].isMagicActive && !_inputMagicDataDictionary[_inputData[i].MagicType].isUsedMagic)
+                //停止から少し時間を待って魔法陣を展開開始する
+                //StopStartTimeのデフォルトの値0は無視する
+                //一度だけこのネストの中を実行する
+                if (magicData.StopStartTime != 0
+                    && magicData.StopStartTime + _delayInitMagicCircle <= Time.time
+                    && !magicData.isInited)
                 {
-                    //魔法の発動中を設定
-                    _inputMagicDataDictionary[_inputData[i].MagicType].isMagicActive = true;
-                    _inputMagicDataDictionary[_inputData[i].MagicType].lastPosMagicActive = _inputData[i].Pos;
+                    magicData.StopPosition = inputData.Pos;
+                    magicData.isInited = true;
+                    GameManager.Instance.Magic_StartCoordinatePause(inputData.Pos, inputData.MagicType);
+                }
+
+                //魔法陣を作成してから_staticDurationの秒数立ったら魔法を発動可能にする
+                if (magicData.StopStartTime != 0
+                    && magicData.StopStartTime + _delayInitMagicCircle + _staticDuration <= Time.time
+                    && magicData.isInited
+                    && !magicData.isMagicActive)
+                {
+                    magicData.isMagicActive = true;
+                    magicData.LastPosMagicActive = inputData.Pos;
+                }
+
+                //魔法の発動
+                if (magicData.isMagicActive)
+                {
+                    //魔法発動中になってから一定の距離移動したら
+                    if (_magicActiveCapacity <=
+                        Vector2.Distance(magicData.LastPosMagicActive, inputData.Pos))
+                    {
+                        //魔法発動方向のベクトルを計算
+                        var v = inputData.Pos - magicData.LastPosMagicActive;
+                        //このあと魔法陣を動かすことができないので多少動かす
+                        GameManager.Instance.Magic_PauseCompleted(inputData.Pos,v, inputData.MagicType);
+
+                        //このboolがtrueのときは魔法を再度発動できない
+                        //魔法のパーティクルが削除されるときにリセットする処理が走る
+                        magicData.isUsedMagic = true;
+                    }
                 }
 
 
-                //前フレームでも座標が停止しているなら
-                if (_inputMagicDataDictionary[_inputData[i].MagicType].isStop)
+                //魔法陣発動済みの場合魔法陣の移動をする
+                if (magicData.isInited)
                 {
-                    // TODO:GameManagerに「座標の停止中」の処理を流す 
-                }
-                //前フレームで座標が停止していない場合
-                else
-                {
-                    // TODO:GameManagerに「座標の停止開始」の処理を流す 
-                    //停止開始の時間を変数に保持
-                    _inputMagicDataDictionary[_inputData[i].MagicType].StopTime = Time.realtimeSinceStartup;
+                    GameManager.Instance.Magic_CoordinatePaused(inputData.Pos, inputData.MagicType);
                 }
 
-                _inputMagicDataDictionary[_inputData[i].MagicType].isStop = true;
-
-                //Debug.Log(_inputData[i].Pos);
-                
-                //1920 x 1080のディスプレイに最大値640 x 576のサイズで返される値を中心揃えで再計算する
-                //元が画像データなので取得する座標軸はx↓,y→でUnityの座標軸はx↑,y→である
-                //var m =(float) 1080 / 576;
-                //少し余白をもたせる
-                var m =(float) 1080 / (576 * 1.04f);
-                var offsetX = (1920 - (640 * 1.04f)* m) / 2;
-                //TODO:y軸が逆
-                Vector2 pos = new Vector2(_inputData[i].Pos.x * m + offsetX, 1080 - _inputData[i].Pos.y * m);            
-                GameManager.Instance.TestMagicPoint(pos, _inputData[i].MagicType);
-                //GameManager.Instance.TestMagicPoint(_inputData[i].Pos, _inputData[i].MagicType);
+                //停止開始時の時間を保持
+                if (!magicData.isStop)
+                {
+                    magicData.StopStartTime = Time.time;
+                    magicData.isStop = true;
+                }
             }
-            //停止とみなす距離の範囲外
+            //静止していない or 静止画解除されたら
             else
             {
-                //前フレームで停止していたら
-                if (_inputMagicDataDictionary[_inputData[i].MagicType].isStop)
+                //魔法が発動済みでなければ初期化
+                if (!magicData.isUsedMagic)
                 {
-                    // TODO:GameManagerに「座標の停止キャンセル」の処理を流す 
+                    ResetMagicData(inputData.MagicType);
                 }
+            }
 
-                _inputMagicDataDictionary[_inputData[i].MagicType].isStop = false;
-            }
-            
-            //魔法発動中か
-            if (_inputMagicDataDictionary[_inputData[i].MagicType].isMagicActive && !_inputMagicDataDictionary[_inputData[i].MagicType].isUsedMagic)
-            {
-                //魔法発動中になってから一定の距離移動したら
-                if (_magicActiveCapacity <= Vector2.Distance(_inputMagicDataDictionary[_inputData[i].MagicType].lastPosMagicActive,
-                        _inputData[i].Pos) )
-                {
-                    
-                    /*
-                     *            1 y
-                     *            |
-                     *            |
-                     * -1 --------|------- 1 x
-                     *            |
-                     *            |  
-                     *            -1     
-                     */
-                    // TODO:GameManagerに「停止完了」の処理を流す 
-                    //魔法発動中になってから座標が移動した方向を取得
-                    var v = _inputData[i].Pos - _inputMagicDataDictionary[_inputData[i].MagicType].lastPosMagicActive ;
-                    Debug.Log($"停止完了 {v.normalized}");
-                    _inputMagicDataDictionary[_inputData[i].MagicType].isMagicActive = false;
-                    _inputMagicDataDictionary[_inputData[i].MagicType].isUsedMagic = true;
-                }
-            }
-            //1フレーム前の座標を更新
-            _inputMagicDataDictionary[_inputData[i].MagicType].lastPos = _inputData[i].Pos;
+            //停止位置を更新
+            //次のフレームの判定に使うのでLastFramePositionのみ更新
+            magicData.LastFramePosition = inputData.Pos;
         }
+
+        //最終チェック
+        for (int index = 1; index < 5; index++)
+        {
+            //入力されていな尚且つ魔法が発動済みでなければ初期化
+            if (!checkMagicType[index] && !MagicDataDictionary[(MagicType)index].isUsedMagic)
+            {
+                ResetMagicData((MagicType)index);
+            }
+            //trueの場合次のフレームで使用するので初期化
+            else
+            {
+                checkMagicType[index] = false;
+            }
+        }
+    }
+
+    /// <summary>
+    /// 魔法が発動可能かを計算している変数を初期化する
+    /// </summary>
+    /// <param name="magicType"></param>
+    public void ResetMagicData(MagicType magicType)
+    {
+        //魔法を発動中ならリリースする ただし、魔法発動済みなら無視する
+        if (MagicDataDictionary[magicType].isInited && !MagicDataDictionary[magicType].isUsedMagic)
+        {
+            GameManager.Instance.Magic_CancelCoordinatePause(MagicDataDictionary[magicType].LastFramePosition,
+                magicType);
+        }
+
+        MagicDataDictionary[magicType].LastFramePosition = Vector2.zero;
+        MagicDataDictionary[magicType].StopPosition = Vector2.zero;
+        MagicDataDictionary[magicType].isStop = false;
+        MagicDataDictionary[magicType].StopStartTime = 0;
+        MagicDataDictionary[magicType].isInited = false;
+        MagicDataDictionary[magicType].isMagicActive = false;
+        MagicDataDictionary[magicType].LastPosMagicActive = Vector2.zero;
+        MagicDataDictionary[magicType].isUsedMagic = false;
     }
 }

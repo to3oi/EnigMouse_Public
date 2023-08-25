@@ -1,4 +1,7 @@
+using System;
 using Cysharp.Threading.Tasks;
+using UniRx;
+using UniRx.Triggers;
 using UnityEngine;
 
 public class BaseStageObject : MonoBehaviour
@@ -10,12 +13,15 @@ public class BaseStageObject : MonoBehaviour
 
     [SerializeField] private StageObjectType _stageObjectType = StageObjectType.None;
     public StageObjectType StageObjectType { get => _stageObjectType;}
-
+    
     public int _stageCreateAnimationIndex { get; private set; }
+
     /// <summary>
-    /// 最初に設定する地面のテクスチャー
+    /// アニメーションが再生中かどうか
     /// </summary>
-    public Texture2D DefaultGroundTexture;
+    protected bool isPlaying = false;
+
+    protected Animator _animator;
 
     public BaseStageObject(Vector2 position,int stageCreateAnimationIndex)
     {
@@ -23,23 +29,41 @@ public class BaseStageObject : MonoBehaviour
         _stageCreateAnimationIndex = stageCreateAnimationIndex;
     }
 
-    #region Animations
-    /// <summary>
-    /// ステージ生成時に再生するアニメーションの関数
-    /// これは上から落ちてくるアニメーションを含む
-    /// </summary>
-    public void InitStageAnimation()
+    private void Awake()
     {
-        //TODO:ステージ生成時に上から落ちてくるアニメーションを作る
-        InitAnimation();
+        _animator = GetComponent<Animator>();
+
+        ObservableStateMachineTrigger[] triggers =
+            _animator.GetBehaviours<ObservableStateMachineTrigger>();
+        
+        foreach (var trigger in triggers)
+        {
+            // Stateの終了イベント
+            IDisposable exitState = trigger
+                .OnStateExitAsObservable()
+                .Subscribe(onStateInfo =>
+                {
+                    AnimatorStateInfo info = onStateInfo.StateInfo;
+                    if (info.IsName("Base Layer.Init") || info.IsName("Base Layer.End"))
+                    {
+                        isPlaying = false;
+                    }
+                }).AddTo(this);
+        }
     }
+
+    #region Animations
 
     /// <summary>
     /// ステージ生成時やオブジェクト生成時に再生するアニメーションの関数
     /// </summary>
     public virtual async UniTask InitAnimation()
     {
-        
+        //アニメーションの実行開始
+        isPlaying = true;
+        _animator.SetTrigger(AnimationName.Init);
+
+        await UniTask.WaitUntil(() => !isPlaying);    
     }
     
     
@@ -48,7 +72,11 @@ public class BaseStageObject : MonoBehaviour
     /// </summary>
     public virtual async UniTask EndAnimation()
     {
-        
+        //アニメーションの実行開始
+        isPlaying = true;
+        _animator.SetTrigger(AnimationName.End);
+
+        await UniTask.WaitUntil(() => !isPlaying);
     }
     #endregion
 
@@ -73,12 +101,37 @@ public class BaseStageObject : MonoBehaviour
     {
         return false;
     }
+    /// <summary>
+    /// ネズミが今移動したら死亡するか判定して返す
+    /// </summary>
+    /// <returns></returns>
+    public virtual bool isMovedDeath()
+    {
+        return false;
+    }
 
+    /// <summary>
+    /// このマスに移動したときの処理を実行
+    /// </summary>
+    /// <returns></returns>
+    public virtual async UniTask MoveToCell()
+    {
+    }
+    
     /// <summary>
     /// 
     /// </summary>
     public virtual void Reset()
     {
         
+    }
+
+    /// <summary>
+    /// ターンの終了処理
+    /// ネズミが動いたあとに必ず呼ばれる
+    /// </summary>
+    public virtual async UniTask EndTurn()
+    {
+        await UniTask.Yield();
     }
 }

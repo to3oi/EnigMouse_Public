@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class StageObjectIce : BaseStageObject,IPond
+public class StageObjectIce : BaseStageObject
 {
     private bool _isPassable = false;//移動できるようにする場合はtrueに変更
     public StageObjectIce(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
@@ -44,11 +44,5 @@ public class StageObjectIce : BaseStageObject,IPond
         {
             return false;
         }
-    }
-
-    public Texture2D Texture2D;
-    public Texture2D GetTexture2D()
-    {
-        return Texture2D;
     }
 }

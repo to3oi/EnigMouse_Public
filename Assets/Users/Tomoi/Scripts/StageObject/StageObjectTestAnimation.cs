@@ -7,7 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public class StageObjectTestAnimation : BaseStageObject
 {
-    private Animator _animator;
+    private Animator _testAnimator;
     public StageObjectTestAnimation(Vector2 position, int stageCreateAnimationIndex) : base(position,
         stageCreateAnimationIndex)
     {
@@ -16,15 +16,15 @@ public class StageObjectTestAnimation : BaseStageObject
     /// <summary>
     /// アニメーションが再生中かどうか
     /// </summary>
-    private bool isPlaying = false;
+    private bool testIsPlaying = false;
 
     //Animatorの取得など
     private void Awake()
     {
-        _animator = GetComponent<Animator>();
+        _testAnimator = GetComponent<Animator>();
 
         ObservableStateMachineTrigger[] triggers =
-            _animator.GetBehaviours<ObservableStateMachineTrigger>();
+            _testAnimator.GetBehaviours<ObservableStateMachineTrigger>();
 
 
         foreach (var trigger in triggers)
@@ -37,7 +37,7 @@ public class StageObjectTestAnimation : BaseStageObject
                     AnimatorStateInfo info = onStateInfo.StateInfo;
                     if (info.IsName("Base Layer.Init") || info.IsName("Base Layer.End"))
                     {
-                        isPlaying = false;
+                        testIsPlaying = false;
                     }
                 }).AddTo(this);
         }
@@ -73,10 +73,10 @@ public class StageObjectTestAnimation : BaseStageObject
     public override async UniTask InitAnimation()
     {
         //アニメーションの実行開始
-        isPlaying = true;
-        _animator.SetTrigger(AnimationName.Init);
+        testIsPlaying = true;
+        _testAnimator.SetTrigger(AnimationName.Init);
 
-        await UniTask.WaitUntil(() => !isPlaying);
+        await UniTask.WaitUntil(() => !testIsPlaying);
     }
 
 
@@ -86,9 +86,9 @@ public class StageObjectTestAnimation : BaseStageObject
     public override async UniTask EndAnimation()
     {
         //アニメーションの実行開始
-        isPlaying = true;
-        _animator.SetTrigger(AnimationName.End);
+        testIsPlaying = true;
+        _testAnimator.SetTrigger(AnimationName.End);
 
-        await UniTask.WaitUntil(() => !isPlaying);
+        await UniTask.WaitUntil(() => !testIsPlaying);
     }
 }
