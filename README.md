@@ -15,6 +15,7 @@ https://github.com/to3oi/KinectImageConvertSender
 |  UniRx  |  7.1.0  |
 |  UniTask  |  2.3.2  |
 |  UnityEasyNet  |  0.0.2  |
+|  MessagePack-CSharp  |  2.5.124  |
 
 
 |  AssetName  |  Version  |
