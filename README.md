@@ -1,6 +1,8 @@
 # MsKinect2023
 このゲームではプレイヤーの入力に別のソフトを使用します
-https://github.com/to3oi/KinectImageConvertSender
+[![EnigMouseSendMaster](https://github-readme-stats.vercel.app/api/pin/?username=to3oi&repo=EnigMouseSendMaster)](https://github.com/to3oi/EnigMouseSendMaster)
+[![EnigMouseSendClient](https://github-readme-stats.vercel.app/api/pin/?username=to3oi&repo=EnigMouseSendClient)](https://github.com/to3oi/EnigMouseSendClient)
+
 # 開発期間
 2023/4/28 ~
 # 開発環境
