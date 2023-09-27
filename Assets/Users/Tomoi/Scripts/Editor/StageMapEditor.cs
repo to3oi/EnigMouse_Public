@@ -50,7 +50,11 @@ public class StageMapEditor : EditorWindow
     /// </Summary>
     void OnGUI()
     {
-        boxSizeOffset = EditorGUILayout.Vector2Field("windowOffset", boxSizeOffset);
+        //サイズを固定
+        Rect p = position;
+        p.position =  position.position;
+        p.size =  new Vector2(500, 600);
+        position= p;
         //ScriptableObjectの取得
         var guids = UnityEditor.AssetDatabase.FindAssets("t:StageMaps");
         if (guids.Length == 0)
