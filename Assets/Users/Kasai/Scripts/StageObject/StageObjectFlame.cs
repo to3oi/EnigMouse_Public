@@ -3,23 +3,21 @@ using UnityEngine;
 
 public class StageObjectFlame : BaseStageObject
 {
-    private Vector3 _flamePos;
-    private Vector3 _destinationPos;
-    private bool _detinationArea = false;
+    private Vector2 vec = Vector2.zero;
+    private Vector2 pos = Vector2.zero;
 
     [SerializeField] private Transform _objectRoot;
     private Vector3 _effectFirePosition = new Vector3(0f, 0.9f, 0f);
 
-    private StageManager stageManager;
+    private DynamicStageObject dynamicStageObject;
     /// <summary>
     /// 炎が出ているか
     /// </summary>
-    private bool isFire = false;
+    private bool isFire = true;
 
     public StageObjectFlame(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
     {
-        _flamePos = new Vector3(transform.position.x, 0, transform.position.z);
-        _destinationPos = _flamePos;
+
     }
 
     public override async UniTask InitAnimation()
@@ -36,25 +34,24 @@ public class StageObjectFlame : BaseStageObject
 
     public override bool HitMagic(MagicType type, Vector2 direction, out StageObjectType stageObjectType)
     {
-        _flamePos = transform.position;
-        _destinationPos = _flamePos;
-        _flamePos.y += 1f;
-        if (MagicType.Wind == type) //風の魔法を受けた時の処理
+        if (MagicType.Wind == type && isFire) //風の魔法を受けた時の処理
         {
-            EffectManager.Instance.PlayEffect(EffectType.Magic_Fire, _flamePos, Quaternion.identity);
+            //pos = new Vector2(Position.x, Mathf.Abs(Position.y - 5));
+            //pos = new Vector2(transform.position.x,transform.position.z -1);
+            EffectManager.Instance.PlayEffect(EffectType.Magic_None, transform.position, Quaternion.identity);
 
-            RouteSearch(direction);
+            StopFireEffect();
 
-            FireMove(direction);
+            //風魔法のベクトルの方向のみに変換
+            //vec = direction;
+            //vecSign(vec);
 
-            //自身をNoneに変更
+            //ignition(vec);
+            SoundManager.Instance.PlaySE(SEType.BlowOut);
         }
 
         if (MagicType.Water == type) //水の魔法を受けた時の処理
         {
-            //自身をNoneに変更
-
-
             //エフェクトを再生
             //ここでは適当な値StageObject_Noneを使用
             //第二引数、第三引数に座標と回転を入れる
@@ -68,135 +65,103 @@ public class StageObjectFlame : BaseStageObject
             //TODO:変更処理がありそうだけどわからないから保留
             //stageObjectType = StageObjectType.Flame;
             //return true;
+            SoundManager.Instance.PlaySE(SEType.Extinguisher);
         }
 
         stageObjectType = StageObjectType.Flame;
         return false;
     }
-
-    private void RouteSearch(Vector2 direction) //移動方向の選択
+    private void vecSign(Vector2 winddir)
     {
-        var winddir = (Mathf.Sign(direction.x), Mathf.Sign(direction.y));
-        switch (winddir)
+        if (winddir == Vector2.zero)
         {
-            case (1, 0):
-                _destinationPos.x += 1;
-                break;
-            case (-1, 0):
-                _destinationPos.x -= 1;
-                break;
-            case (0, 1):
-                _destinationPos.y += 1;
-                break;
-            case (0, -1):
-                _destinationPos.y -= 1;
-                break;
-
-            default:
-                Debug.LogError("不正な値です");
-                break;
+            Debug.LogError("Windが使用できません");
+            return;
         }
-    }
-
-    private void FireMove(Vector2 direction) //炎の移動先の検索
-    {
-        //盤面の外に向かって風が吹いた場合の挙動どうする
-        var mousePos = GameObject.Find("Mouse").GetComponent<Mouse>().MousePosition;
-        stageManager = StageManager.Instance;
-        RouteSearch(direction);
-        if (AreaEvent(stageManager.GetStageObjectType((int)_destinationPos.x, (int)_destinationPos.z)) ||
-            stageManager.GetStageObjectType((int)_destinationPos.x, (int)_destinationPos.z) == null)
+        else if (winddir.x == winddir.y)
         {
-            var dif = _destinationPos - _flamePos;
+            Debug.LogError("ベクトル量が同じなため移動先を決定できません");
+        }
+        if (Mathf.Abs(winddir.x) > Mathf.Abs(winddir.y))
+        {
+            winddir.x = Mathf.Sign(winddir.x);
+            winddir.y = 0;
+        }
+        else
+        {
+            winddir.y = Mathf.Sign(winddir.y);
+            winddir.x = 0;
+        }
+        vec = winddir;
+    }
+    private void ignition(Vector2 vector)
+    {
+        var destinationPos = pos - vector;
+        if ((destinationPos.x <= 5 && destinationPos.x >= 0) && (destinationPos.y <= 5 && destinationPos.y >= 0))
+        {
             for (int i = 0; i < 5; i++)
             {
-                dif = _destinationPos - _flamePos;
-                if (!AreaEvent(stageManager.GetStageObjectType((int)_destinationPos.x,
-                        (int)_destinationPos.z))) //マウスと座標がかぶったときの処理も追加予定
-                {
-                    //巻き戻し
-                    if (dif.x != 0) //x方向に移動するとき
-                    {
-                        dif.x -= Mathf.Sign(dif.x);
-                    }
-                    else if (dif.z != 0) //z方向に移動するとき
-                    {
-                        dif.z -= Mathf.Sign(dif.z);
-                    }
+                Debug.Log("destinationtype =  "+StageManager.Instance.GetStageObjectType((int)destinationPos.x, (int)destinationPos.y));
+                Debug.Log("postype = "+StageManager.Instance.GetStageObjectType((int)pos.x, (int)pos.y));
+                Debug.Log("Destinationpos:" + destinationPos);
+                Debug.Log("vec =" + vector);
 
+                if (!stageTypeCheck(StageManager.Instance.GetStageObjectType((int)destinationPos.x, (int)destinationPos.y)))
+                {
+                    
+                    Debug.Log("TypeCheck:"+stageTypeCheck(StageManager.Instance.GetStageObjectType((int)destinationPos.x, (int)destinationPos.y)));
+                    Debug.Log("destination =  " + StageManager.Instance.GetStageObjectType((int)destinationPos.x, (int)destinationPos.y));
                     break;
                 }
-                else if (AreaEvent(stageManager.GetStageObjectType((int)_destinationPos.x, (int)_destinationPos.z)) ||
-                         _destinationPos == mousePos) //マウスの座標とかぶったときとAreaEventがtrueのとき
+                else if(Mouse.Instance.MousePosition == pos)
                 {
+                    Debug.Log("MousePos == pos");
                     break;
                 }
-
-                RouteSearch(direction);
-                if (_destinationPos.z < 0 || _destinationPos.z > 5 || _destinationPos.x < 0 || _destinationPos.x > 5)
+                else if(StageManager.Instance.GetStageObjectType((int)destinationPos.x, (int)destinationPos.y) == null)
                 {
-                    //巻き戻し
-                    if (dif.x != 0) //x方向に移動するとき
+                    if (vector.x != 0)//x方向に移動するとき
                     {
-                        dif.x -= Mathf.Sign(dif.x);
+                        destinationPos.x -= Mathf.Sign(vector.x);
                     }
-                    else if (dif.z != 0) //z方向に移動するとき
+                    else if (vector.y != 0)//y方向に移動するとき
                     {
-                        dif.z -= Mathf.Sign(dif.z);
+                        destinationPos.y -= Mathf.Sign(vector.y);
                     }
-
+                    Debug.Log("ステージ外");
                     break;
                 }
+                else if(stageTypeCheck(StageManager.Instance.GetStageObjectType((int)destinationPos.x, (int)destinationPos.y)))
+                {
+                    Debug.Log("Roop");
+                }
+                destinationPos -= vector;
             }
         }
-        //火の魔法の処理を_destinationPosに発生させる
+        pos = destinationPos;
+        dynamicStageObject = StageManager.Instance.GetDynamicStageObject((int)pos.x, (int)pos.y);
+        dynamicStageObject.HitMagic(MagicType.Fire, Vector2.zero);
     }
-
-    private bool AreaEvent(StageObjectType? stagetype)
+    private bool stageTypeCheck(StageObjectType? stagetype)
     {
         if (stagetype == null)
         {
-            Debug.LogWarning("AreaEvent is null");
+            Debug.Log("StageType = null");
             return false;
         }
-
+        //Debug.Log(stagetype);
         switch (stagetype)
         {
-            case StageObjectType.Magma:
-                return false;
-            case StageObjectType.Grassland:
-                return true;
-            case StageObjectType.Wood:
-                return true;
-            case StageObjectType.Monster:
-                return true;
-            case StageObjectType.Ice:
-                return true;
-            case StageObjectType.Pond:
-                return true;
-            case StageObjectType.Abyss:
-                return false;
-            case StageObjectType.Flame:
-                return false;
-            case StageObjectType.Rock:
-                return false;
-            case StageObjectType.Key:
-                return false;
-            case StageObjectType.MagicCircle:
-                return false;
-            case StageObjectType.Mouse:
-                return false;
             case StageObjectType.None:
+            case StageObjectType.Mouse:
                 return true;
+
             default:
-                Debug.Log("このstagetypeは存在しません");
                 return false;
         }
     }
 
-
     private BaseEffect _baseFireEffect;
-
     private void PlayFireEffect()
     {
         _baseFireEffect = EffectManager.Instance.PlayEffect(EffectType.StageObject_Flame, _effectFirePosition,
@@ -227,10 +192,10 @@ public class StageObjectFlame : BaseStageObject
     {
         if (isFire)
         {
-            //await Mouse.Instance.Death();
+            await Mouse.Instance.Death();
         }
     }
-    
+
     public override bool isMovedDeath()
     {
         return isFire;

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7349981752075952}
   - component: {fileID: 7349981752075959}
+  - component: {fileID: 3793165622149346696}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -44,11 +45,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46c4929b4c5c6eb4fa01eab1746691f3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _firePlayerMagic: {fileID: 5011588373556986594, guid: 1a7a061e30023b0479364a526a43f202,
+  _gameOver: {fileID: 3793165622149346696}
+  _timeLimit: 300
+  _firePlayerMagic: {fileID: 1811573726524891256, guid: 1a7a061e30023b0479364a526a43f202,
     type: 3}
-  _waterPlayerMagic: {fileID: 977597834389810654, guid: 80b88f850f1194d4aa6c96ddf8274be6,
+  _waterPlayerMagic: {fileID: 5735923650887569853, guid: 80b88f850f1194d4aa6c96ddf8274be6,
     type: 3}
-  _icePlayerMagic: {fileID: 4445206341957795865, guid: da6291b8e38efea4da6c22a08d54e400,
+  _icePlayerMagic: {fileID: 6985381441005655722, guid: da6291b8e38efea4da6c22a08d54e400,
     type: 3}
-  _windPlayerMagic: {fileID: 2161439930614129042, guid: 6b0cedf6630abec4abd44b9f7fec7bb5,
+  _windPlayerMagic: {fileID: 6667376467738700475, guid: 6b0cedf6630abec4abd44b9f7fec7bb5,
+    type: 3}
+--- !u!114 &3793165622149346696
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7349981752075958}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f103ca2f60c1454b8ae1dc49144adee, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  createPrefab: {fileID: 1674739588065962027, guid: 2fa7aba21e973a94fb347f69c4710a0b,
     type: 3}

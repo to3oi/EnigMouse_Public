@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UniRx;
 using UniRx.Triggers;
@@ -21,6 +22,8 @@ public class EffectManager : SingletonMonoBehaviour<EffectManager>
             var parentObj = new GameObject($"Effect_{effectTypeInfo.MagicType.ToString()}").transform;
             var pool = new EffectPool(effectTypeInfo.Effect, parentObj, effectTypeInfo.MagicType);
             _effectDictionary.Add(effectTypeInfo.MagicType, (parentObj, pool));
+            var eff = pool.Rent();
+            ReturnPool(effectTypeInfo.MagicType,eff);
         }
 
         
@@ -56,10 +59,11 @@ public class EffectManager : SingletonMonoBehaviour<EffectManager>
     /// </summary>
     /// <param name="effectType"></param>
     /// <param name="particlePlayer"></param>
-    public void ReturnPool(EffectType effectType,BaseEffect baseEffect)
+    public async void ReturnPool(EffectType effectType,BaseEffect baseEffect)
     {
         //パーティクルの親オブジェクトの変更
         baseEffect.transform.parent = _effectDictionary[effectType].parent;
+        UniTask.DelayFrame(1);
         _effectDictionary[effectType].pool.Return(baseEffect);
     }
 }

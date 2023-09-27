@@ -17,7 +17,7 @@ public class StageMapEditor : EditorWindow
 
     private Vector2 _scrollPosition = Vector2.zero;
 
-    [MenuItem("Map/Edit")]
+    [MenuItem("CustomEditor/Map")]
     static void Open()
     {
         var window = GetWindow<StageMapEditor>();

@@ -77,7 +77,8 @@ public class StageObjectMonster : BaseStageObject
 
             //死亡エフェクトを再生
             PlayDieEffect().Forget();
-            
+
+            SoundManager.Instance.PlaySE(SEType.FirePrepare);
             isDie = true;
         }
 
@@ -113,7 +114,6 @@ public class StageObjectMonster : BaseStageObject
         //ネズミを攻撃する
         _monsterAnimator.SetTrigger(IsJump);
         _monsterAnimator.SetFloat(AttackType, (float)Random.Range(0, 2));
-        await Mouse.Instance.Death();
         //モンスターとネズミの方向の差のQuaternion
         var aim = RotationTarget.position - _offsetObject.position;
         aim.y = 0;
@@ -122,8 +122,10 @@ public class StageObjectMonster : BaseStageObject
         await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
         //回転の終了を待つ
         await _offsetObject.DORotateQuaternion(q, 0.1f).AsyncWaitForCompletion();
-
         _monsterAnimator.SetTrigger(IsAttack);
+        await UniTask.DelayFrame(14);
+
+        await Mouse.Instance.Death();
         //アタックアニメーションの時間待機
         //アニメーションの終了時間でawaitできるけど使用箇所ここだけになるので未使用
         await UniTask.Delay(TimeSpan.FromSeconds(0.5f));

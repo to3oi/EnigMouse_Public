@@ -199,8 +199,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Position: {x: 0, y: 0}
   _stageObjectType: 109
-  DefaultGroundTexture: {fileID: 0}
-  stageObjectMagma: 0
 --- !u!95 &6968393950846846393
 Animator:
   serializedVersion: 5
@@ -485,7 +483,7 @@ PrefabInstance:
     - target: {fileID: 6231659406355029023, guid: 4d47c6f33c2a44d4397d0b840dfb4ed8,
         type: 3}
       propertyPath: m_Name
-      value: Fram
+      value: Frame
       objectReference: {fileID: 0}
     - target: {fileID: 6715040329289107109, guid: 4d47c6f33c2a44d4397d0b840dfb4ed8,
         type: 3}

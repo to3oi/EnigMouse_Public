@@ -16,6 +16,12 @@ MonoBehaviour:
   - MagicType: 0
     Effect: {fileID: 3918474453293991679, guid: 8696135573b78ee419f7b46dc8742a89,
       type: 3}
+  - MagicType: 1
+    Effect: {fileID: -4258407387846529108, guid: 93b78095d08720045b198600df787bbc,
+      type: 3}
+  - MagicType: 4
+    Effect: {fileID: 1623913186132982184, guid: 70c659fc42dbc1c499e171de8c5d0ba6,
+      type: 3}
   - MagicType: 100
     Effect: {fileID: 3918474453293991679, guid: 8696135573b78ee419f7b46dc8742a89,
       type: 3}
@@ -32,28 +38,28 @@ MonoBehaviour:
     Effect: {fileID: 5379938466411079141, guid: 274f3c104e015b04a84e493dccb96470,
       type: 3}
   - MagicType: 21
-    Effect: {fileID: -2427627431911285645, guid: ccc039a804c8e994295029d1d7c610a9,
-      type: 3}
-  - MagicType: 23
-    Effect: {fileID: -1193627714098550228, guid: 526ce7bd011fd3c45864e645ff5595a5,
-      type: 3}
-  - MagicType: 24
-    Effect: {fileID: -2699284974910153122, guid: de5e7cf0945fe6b47aa9fe674e5ba620,
-      type: 3}
-  - MagicType: 25
-    Effect: {fileID: -2691463876926681932, guid: c77ef20446af6e448afcce153e484780,
-      type: 3}
-  - MagicType: 31
     Effect: {fileID: -7442499771611097897, guid: ce2c095800abe5d44872ba8133df5d65,
       type: 3}
-  - MagicType: 33
+  - MagicType: 23
     Effect: {fileID: 3351485668099237526, guid: f33c74810945519479a01a77d652e0b2,
       type: 3}
-  - MagicType: 34
+  - MagicType: 24
     Effect: {fileID: 1349123283711196715, guid: 66ac56ad620ff244cb79dee4a0e111d4,
       type: 3}
-  - MagicType: 35
+  - MagicType: 25
     Effect: {fileID: -5287977825808286887, guid: 02dc293938268ff4c9f19b8e1efe2858,
+      type: 3}
+  - MagicType: 31
+    Effect: {fileID: -2427627431911285645, guid: ccc039a804c8e994295029d1d7c610a9,
+      type: 3}
+  - MagicType: 33
+    Effect: {fileID: -1193627714098550228, guid: 526ce7bd011fd3c45864e645ff5595a5,
+      type: 3}
+  - MagicType: 34
+    Effect: {fileID: -2699284974910153122, guid: de5e7cf0945fe6b47aa9fe674e5ba620,
+      type: 3}
+  - MagicType: 35
+    Effect: {fileID: -2691463876926681932, guid: c77ef20446af6e448afcce153e484780,
       type: 3}
   - MagicType: 41
     Effect: {fileID: 5966552224011520518, guid: 5a45ef29cd5312548878d79815f1de4c,
@@ -71,4 +77,16 @@ MonoBehaviour:
       type: 3}
   - MagicType: 108
     Effect: {fileID: -4258407387846529108, guid: 93b78095d08720045b198600df787bbc,
+      type: 3}
+  - MagicType: 800
+    Effect: {fileID: -2613611079792737735, guid: cfed20709658dda44b3527d0d2b77ce8,
+      type: 3}
+  - MagicType: 801
+    Effect: {fileID: 1349123283711196715, guid: db42c18c1a0ae8f41ad884d9da5733de,
+      type: 3}
+  - MagicType: 802
+    Effect: {fileID: -2699284974910153122, guid: 8af09726eb91a3d4db2fe45b1c76e29e,
+      type: 3}
+  - MagicType: 803
+    Effect: {fileID: 8920877027545891979, guid: 6a102a4751a3bbe4ba1c9891fe54123b,
       type: 3}

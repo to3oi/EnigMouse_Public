@@ -57,6 +57,13 @@ public enum EffectType
     StageObject_Key = 110,              //鍵
     StageObject_MagicCircle = 111,      //魔法陣
     
+    
+    //UI系は800スタート
+    Fire_UI = 800,
+    Ice_UI = 801,
+    Water_UI = 802,
+    Wind_UI = 803,
+    
     //その他特殊系は900スタート
     Die = 900                           //死亡時
 }

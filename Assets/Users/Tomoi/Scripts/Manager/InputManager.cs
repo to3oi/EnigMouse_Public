@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class MagicData
@@ -44,7 +46,7 @@ public class MagicData
     public bool isUsedMagic = false;
 }
 
-public class InputManager : SingletonMonoBehaviour<InputManager>
+public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
 {
     /// <summary>
     /// 静止許容距離
@@ -59,7 +61,7 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     /// <summary>
     /// 静止している時間
     /// </summary>
-    [SerializeField] private float _staticDuration = 2.0f;
+    [SerializeField] private float _staticDuration = 2.5f;
 
     /// <summary>
     /// 魔法陣作成までの待機時間
@@ -74,7 +76,7 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     /// <summary>
     /// デバッグ用
     /// </summary>
-    private IInputDataHandler _inputMouse = new InputMouse();
+    private InputMouse _inputMouse = new InputMouse();
 
     private InputReceiveData _inputReceiveData = new InputReceiveData();
 
@@ -82,6 +84,16 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     /// trueのとき入力をマウスで行う
     /// </summary>
     [SerializeField] private bool isDebugInput =
+# if UNITY_EDITOR
+        true;
+# else
+    false;
+#endif
+
+    /// <summary>
+    /// trueのとき入力で魔法を発動する
+    /// </summary>
+    [SerializeField] private bool isMagicLogic =
 # if UNITY_EDITOR
         true;
 # else
@@ -100,7 +112,59 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     /// </summary>
     private bool[] checkMagicType;
 
-    private void ResetMagicDataDictionary()
+    #region Offset
+
+    public float XOffset = 0;
+    public float YOffset = 0;
+    public float RotationOffset = 0;
+    public float ScaleOffsetX = 0;
+    public float ScaleOffsetY = 0;
+
+    #endregion
+
+    private SceneList _scene;
+    private bool isInputDataUpdate = false;
+
+    
+    
+    protected override void Awake()
+    {
+        base.Awake();
+
+        DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        //初期化
+        _inputReceiveData.Init();
+
+        //offsetの読み込み
+        XOffset = PlayerPrefs.GetFloat("XOffset", 0);
+        YOffset = PlayerPrefs.GetFloat("YOffset", 0);
+        RotationOffset = PlayerPrefs.GetFloat("RotationOffset", 0);
+        ScaleOffsetX = PlayerPrefs.GetFloat("ScaleOffsetX", 1);
+        ScaleOffsetY = PlayerPrefs.GetFloat("ScaleOffsetY", 1);
+    }
+    
+    /// <summary>
+    /// 現在のシーンを内部的に変更する
+    /// これによりInputの処理が変わる
+    /// </summary>
+    /// <param name="sceneList"></param>
+    public void ChangeScene(SceneList sceneList)
+    {
+        isInputDataUpdate = true;
+        _scene = sceneList;
+        //初期化
+        checkMagicType = new[] { false, false, false, false, false };
+        ResetMagicDataDictionary();
+    }
+
+    /// <summary>
+    /// 現在入力されている情報をリセットする
+    /// </summary>
+    public void ResetMagicDataDictionary()
     {
         MagicDataDictionary.Clear();
         MagicDataDictionary =
@@ -113,19 +177,24 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
                 { MagicType.Wind, new MagicData() }
             };
     }
-
-    protected override void Awake()
+    
+    /// <summary>
+    /// 現在入力されている情報をリセットする
+    /// </summary>
+    public void ResetMagicDataDictionary(MagicType magicType)
     {
-        base.Awake();
-        //初期化
-        checkMagicType = new[] { false, false, false, false, false };
-        _inputReceiveData.Init();
-        ResetMagicDataDictionary();
+        MagicDataDictionary[magicType] = new MagicData();
     }
 
 
     private void Update()
     {
+        //ChangeSceneが呼び出されていなければ入力処理を受け付けない
+        if (!isInputDataUpdate)
+        {
+            return;
+        }
+
         if (isDebugInput)
         {
             //入力データの取得
@@ -138,6 +207,12 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
             else
             {
                 isUpdateInputData = true;
+            }
+
+            //マウスで使用する魔法を変更する
+            if (Input.GetMouseButtonDown(1))
+            {
+                _inputMouse.ChangeMagicType();
             }
         }
         else
@@ -157,16 +232,65 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
     /// </summary>
     public void UpdateInputDataArrays(IInputDataHandler inputDataHandler)
     {
+        switch (_scene)
+        {
+            case SceneList.Title:
+            //TitleInput(inputDataHandler);
+            //break;
+            case SceneList.MainGame:
+                InputNotify(inputDataHandler);
+                break;
+
+            case SceneList.GameClear:
+                break;
+
+            case SceneList.GameOver:
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 魔法が発動可能かを計算している変数を初期化する
+    /// </summary>
+    /// <param name="magicType"></param>
+    public void ResetMagicData(MagicType magicType)
+    {
+        //魔法を発動中ならリリースする ただし、魔法発動済みなら無視する
+        if (MagicDataDictionary[magicType].isInited && !MagicDataDictionary[magicType].isUsedMagic)
+        {
+            switch (_scene)
+            {
+                case SceneList.Title:
+                    TitleManager.Instance.Magic_CancelCoordinatePause(MagicDataDictionary[magicType].LastFramePosition,
+                        magicType);
+                    break;
+                case SceneList.MainGame:
+                    GameManager.Instance.Magic_CancelCoordinatePause(MagicDataDictionary[magicType].LastFramePosition,
+                        magicType);
+                    break;
+            }
+        }
+
+        MagicDataDictionary[magicType].LastFramePosition = Vector2.zero;
+        MagicDataDictionary[magicType].StopPosition = Vector2.zero;
+        MagicDataDictionary[magicType].isStop = false;
+        MagicDataDictionary[magicType].StopStartTime = 0;
+        MagicDataDictionary[magicType].isInited = false;
+        MagicDataDictionary[magicType].isMagicActive = false;
+        MagicDataDictionary[magicType].LastPosMagicActive = Vector2.zero;
+        MagicDataDictionary[magicType].isUsedMagic = false;
+    }
+
+    /// <summary>
+    /// IInputDataHandlerから座標と魔法の種類を通知するロジック
+    /// </summary>
+    /// <param name="inputDataHandler"></param>
+    private void InputNotify(IInputDataHandler inputDataHandler)
+    {
         //入力される座標を取得
         //入力されるMagicTypeの種類は一意である
         //ただし、入力される順番とすべての魔法が入力されているかは保証されない
         _inputDatas = inputDataHandler.UpdateInputArrays();
-
-        /*//初期化
-        for (int index = 0; index < checkMagicType.Length; index++)
-        {
-            checkMagicType[index] = false;
-        }*/
 
         for (int inputIndex = 0; inputIndex < _inputDatas.Length; inputIndex++)
         {
@@ -175,6 +299,14 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
             var magicData = MagicDataDictionary[inputData.MagicType];
 
             checkMagicType[(int)inputData.MagicType] = true;
+
+            //Outlineを表示
+            switch (_scene)
+            {
+                case SceneList.MainGame:
+                    GameManager.Instance.SetOutline(GetCalibratedVector2(inputData.Pos), inputData.MagicType);
+                    break;
+            }
 
             //静止判定
             //isInitedがTrueのときは距離の判定をLastFramePositionではなくStopPositionで行う
@@ -191,7 +323,17 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
                 {
                     magicData.StopPosition = inputData.Pos;
                     magicData.isInited = true;
-                    GameManager.Instance.Magic_StartCoordinatePause(inputData.Pos, inputData.MagicType);
+                    switch (_scene)
+                    {
+                        case SceneList.Title:
+                            TitleManager.Instance.Magic_StartCoordinatePause(GetCalibratedVector2(inputData.Pos),
+                                inputData.MagicType);
+                            break;
+                        case SceneList.MainGame:
+                            GameManager.Instance.Magic_StartCoordinatePause(GetCalibratedVector2(inputData.Pos),
+                                inputData.MagicType);
+                            break;
+                    }
                 }
 
                 //魔法陣を作成してから_staticDurationの秒数立ったら魔法を発動可能にする
@@ -207,26 +349,46 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
                 //魔法の発動
                 if (magicData.isMagicActive)
                 {
-                    //魔法発動中になってから一定の距離移動したら
-                    if (_magicActiveCapacity <=
-                        Vector2.Distance(magicData.LastPosMagicActive, inputData.Pos))
-                    {
-                        //魔法発動方向のベクトルを計算
-                        var v = inputData.Pos - magicData.LastPosMagicActive;
-                        //このあと魔法陣を動かすことができないので多少動かす
-                        GameManager.Instance.Magic_PauseCompleted(inputData.Pos,v, inputData.MagicType);
+                    //var v = inputData.Pos - magicData.LastPosMagicActive;
 
-                        //このboolがtrueのときは魔法を再度発動できない
-                        //魔法のパーティクルが削除されるときにリセットする処理が走る
-                        magicData.isUsedMagic = true;
+                    //魔法陣の発動
+                    //ベクトルの概念が消えたので元々ベクトルを入れていたところには Vector2.zero を入れる
+                    switch (_scene)
+                    {
+                        case SceneList.Title:
+                            TitleManager.Instance
+                                .Magic_PauseCompleted(GetCalibratedVector2(inputData.Pos), Vector2.zero,
+                                    inputData.MagicType)
+                                .Forget();
+                            break;
+                        case SceneList.MainGame:
+                            GameManager.Instance
+                                .Magic_PauseCompleted(GetCalibratedVector2(inputData.Pos), Vector2.zero,
+                                    inputData.MagicType)
+                                .Forget();
+                            break;
                     }
+
+                    //このboolがtrueのときは魔法を再度発動できない
+                    //魔法のパーティクルが削除されるときにリセットする処理が走る
+                    magicData.isUsedMagic = true;
                 }
 
 
                 //魔法陣発動済みの場合魔法陣の移動をする
                 if (magicData.isInited)
                 {
-                    GameManager.Instance.Magic_CoordinatePaused(inputData.Pos, inputData.MagicType);
+                    switch (_scene)
+                    {
+                        case SceneList.Title:
+                            TitleManager.Instance.Magic_CoordinatePaused(GetCalibratedVector2(inputData.Pos),
+                                inputData.MagicType);
+                            break;
+                        case SceneList.MainGame:
+                            GameManager.Instance.Magic_CoordinatePaused(GetCalibratedVector2(inputData.Pos),
+                                inputData.MagicType);
+                            break;
+                    }
                 }
 
                 //停止開始時の時間を保持
@@ -267,26 +429,34 @@ public class InputManager : SingletonMonoBehaviour<InputManager>
         }
     }
 
+
     /// <summary>
-    /// 魔法が発動可能かを計算している変数を初期化する
+    /// Offsetの値を適応したVector2の値を返す
     /// </summary>
-    /// <param name="magicType"></param>
-    public void ResetMagicData(MagicType magicType)
+    /// <returns></returns>
+    private Vector2 GetCalibratedVector2(Vector2 pos)
     {
-        //魔法を発動中ならリリースする ただし、魔法発動済みなら無視する
-        if (MagicDataDictionary[magicType].isInited && !MagicDataDictionary[magicType].isUsedMagic)
+        //TODO:物体検出でどれくらいずれるか検証してから変更
+        //マウスのときに倍率をかけない        
+        if (!isDebugInput)
         {
-            GameManager.Instance.Magic_CancelCoordinatePause(MagicDataDictionary[magicType].LastFramePosition,
-                magicType);
+            pos.y = 512 - pos.y;
         }
 
-        MagicDataDictionary[magicType].LastFramePosition = Vector2.zero;
-        MagicDataDictionary[magicType].StopPosition = Vector2.zero;
-        MagicDataDictionary[magicType].isStop = false;
-        MagicDataDictionary[magicType].StopStartTime = 0;
-        MagicDataDictionary[magicType].isInited = false;
-        MagicDataDictionary[magicType].isMagicActive = false;
-        MagicDataDictionary[magicType].LastPosMagicActive = Vector2.zero;
-        MagicDataDictionary[magicType].isUsedMagic = false;
+        //Kinectの方向に応じてposを回転させる
+        float sin = (float)Math.Sin(RotationOffset * (Math.PI / 180));
+        float cos = (float)Math.Cos(RotationOffset * (Math.PI / 180));
+
+        var res = new Vector2(pos.x * cos - pos.y * sin, pos.x * sin + pos.y * cos);
+        return new Vector2((res.x + XOffset) * ScaleOffsetX, (res.y + YOffset) * ScaleOffsetY);
     }
-}
+
+    private void OnApplicationQuit()
+    {
+        PlayerPrefs.SetFloat("XOffset", XOffset);
+        PlayerPrefs.SetFloat("YOffset", YOffset);
+        PlayerPrefs.SetFloat("RotationOffset", RotationOffset);
+        PlayerPrefs.SetFloat("ScaleOffsetX", ScaleOffsetX);
+        PlayerPrefs.SetFloat("ScaleOffsetY", ScaleOffsetY);
+    }
+}   

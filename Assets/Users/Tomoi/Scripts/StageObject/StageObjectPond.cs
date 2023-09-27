@@ -41,8 +41,13 @@ public class StageObjectPond : BaseStageObject
         {
             isFrozen = true;
             Frozen().Forget();
+            SoundManager.Instance.PlaySE(SEType.Frozen);
         }
-        
+        else if(type == MagicType.Fire && isFrozen)
+        {
+            isFrozen = false;
+            Melt().Forget();
+        }
         //pondは凍ることはあるが別のオブジェクトに変更されることはないのでfalse
         return false;
     }
@@ -111,14 +116,6 @@ public class StageObjectPond : BaseStageObject
         isFrozen = false;
         IceRatio = 0;
         waterMaterial.SetFloat("_UVTime", Random.Range(0f,10f));
-    }
-    /// <summary>
-    /// ターンの終了処理
-    /// ネズミが動いたあとに必ず呼ばれる
-    /// </summary>
-    public override async UniTask EndTurn()
-    {
-        await Melt();
     }
     public override async UniTask MoveToCell()
     {

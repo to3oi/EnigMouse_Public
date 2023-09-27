@@ -113,7 +113,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Position: {x: 0, y: 0}
   _stageObjectType: 107
-  DefaultGroundTexture: {fileID: 0}
 --- !u!95 &3974412332457005103
 Animator:
   serializedVersion: 5
@@ -144,7 +143,7 @@ PrefabInstance:
     - target: {fileID: 6231659406355029023, guid: 4d47c6f33c2a44d4397d0b840dfb4ed8,
         type: 3}
       propertyPath: m_Name
-      value: Fram
+      value: Frame
       objectReference: {fileID: 0}
     - target: {fileID: 6715040329289107109, guid: 4d47c6f33c2a44d4397d0b840dfb4ed8,
         type: 3}
@@ -219,41 +218,6 @@ PrefabInstance:
     - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
         type: 3}
       propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.45
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,

@@ -1,37 +1,19 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
-using UniRx;
 
 public class StageObjectKey : BaseStageObject
 {
-    GameObject Object;
-    StageObjectNone stageObjectNone;
+    DynamicStageObject dynamicStageObject;
+    [SerializeField] private GameObject keyGameObject;
+    public StageObjectKey(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
+    {
+    }
 
     private void Start()
     {
-        //最初、ネズミが通れる
-        this.gameObject.SetActive(true);
-
-        //StageObjectNoneを取得
-        //stageObjectNone = Object.GetComponent<StageObjectNone>();
-    }
-
-    public StageObjectKey(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
-    {
-        //最初、ネズミが通れる
-        this.gameObject.SetActive(true);
-
-        //StageObjectNoneを取得
-        //stageObjectNone = Object.GetComponent<StageObjectNone>();   
-    }
-
-    public void KeyGet()
-    {
-            this.gameObject.SetActive(false);
-            //StageObjectNoneを取得
-            //stageObjectNone.stageObjectKey = 15f;
+        keyGameObject.transform.DOLocalRotate(new Vector3(45, 360, 0), 5f, RotateMode.FastBeyond360).SetLoops(-1, LoopType.Restart).SetEase(Ease.Linear);
     }
 
     public override bool isValidMove()
@@ -40,14 +22,10 @@ public class StageObjectKey : BaseStageObject
         return true;
     }
 
-    public override void Reset()
-    {
-        //初期化する
-        this.gameObject.SetActive(true);
-    }
     public override async UniTask MoveToCell()
     {
         await Mouse.Instance.KeyGet();
-        
+        dynamicStageObject = StageManager.Instance.GetDynamicStageObject((int)Position.x,(int)Position.y);
+        dynamicStageObject.ReplaceBaseStageObject(StageObjectType.None);
     }
 }

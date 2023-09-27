@@ -32,10 +32,11 @@ public class StageObjectGrassland : BaseStageObject
         //水魔法を使うことで通れなくする
         if (type == MagicType.Water)
         {
-            this.gameObject.SetActive(false);
+            //this.gameObject.SetActive(false);
             //StageObjectWoodを呼び出す
             //stageObjectWood.stageObjectGrassland = 15f;
             stageObjectType = StageObjectType.Wood;
+            SoundManager.Instance.PlaySE(SEType.GrassToWood);
             return true;
         }
 

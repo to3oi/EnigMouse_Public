@@ -12,6 +12,7 @@ public class StageObjectMagma : BaseStageObject
         if (type == MagicType.Water)
         {
             stageObjectType = StageObjectType.Rock;
+            SoundManager.Instance.PlaySE(SEType.MagmaToRock);
             return true;
         }
 
@@ -29,5 +30,9 @@ public class StageObjectMagma : BaseStageObject
     {
         await Mouse.Instance.Death();
 
+    }
+    public override bool isMovedDeath()
+    {
+        return true;
     }
 }

@@ -44,7 +44,8 @@ public class InputReceiveData : IInputDataHandler
         oInputData.Clear();
 
         //信頼度でソート
-        deserializedList.Sort((a, b) => a.Confidence.CompareTo(b));
+        if(deserializedList.Count == 0) { return oInputData.ToArray(); }
+        //deserializedList.Sort((a, b) => a.Confidence.CompareTo(b));
         foreach (var receiveData in deserializedList)
         {
             var magicType = convertLabel2MagicType(receiveData.Label);
@@ -59,8 +60,12 @@ public class InputReceiveData : IInputDataHandler
         for (var i = 1; i < MagicList.Count; i++)
         {
             //物体検出の結果の信頼度が50%以上のときInputデータとして扱う
-            if (0.5f <= MagicList[i].Item2.Confidence)
+            if (0.25f <= MagicList[i].Item2.Confidence)
             {
+                //TODO:入力される座標の最大値は 640 x 576
+                //画面サイズは 1440 x 1080
+                //x -> 2.25  y -> 1.875をかけていい感じに調整
+                
                 InputData input = new InputData(convertLabel2MagicType(MagicList[i].Item2.Label),
                     new Vector2(MagicList[i].Item2.PosX, MagicList[i].Item2.PosY));
                 oInputData.Add(input);
@@ -111,10 +116,10 @@ public class InputReceiveData : IInputDataHandler
     {
         return label switch
         {
-            "Cross" => MagicType.Fire,
-            "Othello" => MagicType.Water,
-            "Ring" => MagicType.Ice,
-            "Square" => MagicType.Wind,
+            "Cross" => MagicType.Water,
+            "Dot" => MagicType.Wind,
+            "Line" => MagicType.Fire,
+            "Round" => MagicType.Ice,
             _ => MagicType.NoneMagic
         };
     }

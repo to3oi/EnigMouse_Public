@@ -114,6 +114,8 @@ MonoBehaviour:
   Position: {x: 0, y: 0}
   _stageObjectType: 104
   _monsterRoot: {fileID: 1341076023942587592}
+  _offsetObject: {fileID: 0}
+  RotationTarget: {fileID: 0}
 --- !u!95 &1748411275413022399
 Animator:
   serializedVersion: 5

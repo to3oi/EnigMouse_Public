@@ -1,25 +1,26 @@
 using DG.Tweening;
 using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class Mouse : SingletonMonoBehaviour<Mouse>
 {
     private bool _keyFlag = false;                  //falseで鍵未所持状態
     private bool _destinationarea = false;          //移動先の判定trueで移動可能
-    private bool _damage = false;                   //trueの場合死亡処理を行う
+    public bool _damage = false;                   //trueの場合死亡処理を行う
     private bool isinput = false;                   //入力されたら一連の行動が終わるまでは処理しない(デバッグ用)
-    private int _rotateCount = 0;                   //回転した回数
     [SerializeField] private float runSpead = 0;    //移動速度
     [SerializeField] private float rotateSpead = 0; //回転速度
     private Quaternion startQuaternion;             //自身の角度
     private Vector3 startPos;                       //初期座標
     private Vector3 mousePos;                       //現在座標
     private Vector3 destinationPos;                 //移動先の座標
-    public Vector3 MousePosition;                   //受け渡し用のマウスの座標
+    public Vector2 MousePosition;                   //受け渡し用のマウスの座標
     private StageManager stageManager;
     private DynamicStageObject dynamicStageObject;
     private Animator anim;
-    public Mouse(Vector3 pos, float rotation)
+    
+     public Mouse(Vector3 pos, float rotation)
     {
         startPos = pos;//スタート時の自身の座標を保持する
         mousePos = new Vector3(startPos.x, 0, startPos.z - 1);//座標調整でZ座標を-1している
@@ -39,13 +40,13 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
         //デバッグ用
         startPos = transform.position;
         mousePos = new Vector3(startPos.x, 0, startPos.z - 1);//座標調整でZ座標を-1している
-        MousePosition = mousePos;
+        MousePosition = new Vector2(mousePos.x,Mathf.Abs(mousePos.z - 5));
         destinationPos = mousePos;//移動先の座標を現在の座標に設定
 
         transform.rotation = Quaternion.EulerRotation(0, transform.rotation.y, 0);
         startQuaternion = transform.rotation;
+
     }
-    // Update is called once per frame
     void Update()
     {
         //デバッグ用
@@ -59,11 +60,14 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
     /// </summary>
     public void MouseAct()
     {
+        if(_damage)
+        {
+            return;
+        }
+        SoundManager.Instance.PlaySE(SEType.MouseMove);
         isinput = true;
         _destinationarea = false;
         anim.SetTrigger("Run");
-        //自分のいるマスのイベントを処理
-        MouseAreaEvent(stageManager.GetStageObjectType((int)mousePos.x, (int)mousePos.z));
         //移動先の探索と移動
         MouseMove();
     }
@@ -97,13 +101,13 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
         if ((destinationPos.x >= 0 && destinationPos.x <= 5) && (destinationPos.z <= 5 && destinationPos.z >= 0))
         {
             DestinationAreaEvent(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z));
-            if (_destinationarea && _rotateCount < 4)
+            if (_destinationarea)
             {
                 var dif = destinationPos - mousePos; //現在座標と移動先の差
                 for (int i = 0; i < 5; i++)//直線状の移動できるマスを検索する
                 {
                     dif = destinationPos - mousePos;
-                    if (!_destinationarea || stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == null)
+                    if (!_destinationarea)//移動先が行き止まりの場合
                     {
                         if (dif.x != 0)//x方向に移動するとき
                         {
@@ -115,15 +119,28 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
                         }
                         break;
                     }
-                    else if (_damage && _destinationarea)
+                    else if (_damage && _destinationarea)//移動先が死亡するエリアの場合
+                    {
+                        turncomp = true;
+                        //移動先がMonsterの場合のみ移動先を少し手前にする
+                        if (stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.Monster)
+                        {
+                            if (dif.x != 0)//x方向に移動するとき
+                            {
+                                dif.x -= Mathf.Sign(dif.x) * 0.7f;
+                            }
+                            else if (dif.z != 0)//z方向に移動するとき
+                            {
+                                dif.z -= Mathf.Sign(dif.z) * 0.7f;
+                            }
+                        }
+                        break;
+                    }
+                    else if (_keyFlag && stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.MagicCircle)//鍵を持っている状態でゴールに触ったらその時点で移動処理を終了
                     {
                         break;
                     }
-                    else if (_keyFlag && stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.MagicCircle)//鍵を持っている状態でゴールに触ったら其の時点で移動処理を終了
-                    {
-                        break;
-                    }
-                    else if (stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.Key && !_keyFlag)
+                    else if (stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.Key && !_keyFlag)//初めて鍵のマスに止まった時の処理
                     {
                         turncomp = true;
                         break;
@@ -145,51 +162,70 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
                 }
                 transform.DOMove(dif, runSpead).SetEase(Ease.InOutCubic).SetRelative(true).OnComplete(() =>//現在の座標と目的の座標を比較し、差を代入して移動させる
                 {
+                    if (stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.Monster)//Monster用にずらした座標の修正
+                    {
+                        if (dif.x != 0)//x方向に移動するとき
+                        {
+                            dif.x += Mathf.Sign(dif.x) * 0.7f;
+                        }
+                        else if (dif.z != 0)//z方向に移動するとき
+                        {
+                            dif.z += Mathf.Sign(dif.z) * 0.7f;
+                        }
+                    }
                     mousePos += dif;//座標を更新
                     destinationPos = mousePos;
-                    MousePosition = mousePos;
+                    MousePosition.x = mousePos.x;
+                    MousePosition.y = Mathf.Abs(mousePos.z - 5);
                     MouseAreaEvent(stageManager.GetStageObjectType((int)mousePos.x, (int)mousePos.z));
                     _destinationarea = false;
                     isinput = false;
-                    if (!turncomp && !_damage)
+                    if(_keyFlag
+                       && stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.MagicCircle
+                       && GameManager.Instance.IsLimitCheck())
                     {
+                        Debug.Log("Turn:"+GameManager.Instance.Turn);
+                    }
+                    else if (!turncomp)
+                    {
+                        transform.DORotate(Vector3.up * 90f, rotateSpead, mode: RotateMode.WorldAxisAdd);
                         //ターン終了用の関数を呼び出す
                         GameManager.Instance.TurnComplete();
                     }
                 });
-                _rotateCount = 0;//回転の回数リセット
-            }
-            else if (_rotateCount >= 4)
-            {
-                Debug.LogError("移動先がありません");
-                anim.SetTrigger("Idle");
             }
             else
             {
-                transform.DORotate(Vector3.up * 90f, rotateSpead, mode: RotateMode.WorldAxisAdd).OnComplete(() =>//正面のマスのtypeが移動不可なら90度回転させてから直進
-                {
-                    destinationPos = mousePos;//移動先の座標をリセット
-                    _rotateCount++;
-                    MouseMove();
-                });
+                transform.DORotate(Vector3.up * 90f, rotateSpead,RotateMode.WorldAxisAdd);
+                GameManager.Instance.TurnComplete();
+
             }
         }
         else
         {
-            transform.DORotate(Vector3.up * 90f, rotateSpead, mode: RotateMode.WorldAxisAdd).OnComplete(() =>//移動先が配列外なら90度回転させてから直進
-            {
-                destinationPos = mousePos;//移動先の座標をリセット
-                _rotateCount++;
-                MouseMove();
-            });
+            transform.DORotate(Vector3.up * 90f, rotateSpead, RotateMode.WorldAxisAdd);
+            GameManager.Instance.TurnComplete();
         }
         anim.SetTrigger("Idle");
+
     }
-    public void Reset()//座標や角度及び鍵の所持状態をリセットさせる
+    public void Reset(Vector2 pos)//座標や角度及び鍵の所持状態をリセットさせる
     {
-        gameObject.SetActive(true);
-        transform.position = startPos;
-        transform.rotation = startQuaternion;
+        _damage = false;
+        _keyFlag = false;
+
+        mousePos = new Vector3(startPos.x, 0, startPos.z - 1);//座標調整でZ座標を-1している
+        MousePosition = new Vector2(mousePos.x, Mathf.Abs(mousePos.z - 5));
+        destinationPos = mousePos;//移動先の座標を現在の座標に設定
+
+        anim.SetTrigger("Reset");
+
+        SetMousePosition(pos);
+    }
+
+    public void HideMouse()
+    {
+        transform.DOScale(Vector3.zero, 0.5f);
     }
     /// <summary>
     /// 鍵の取得
@@ -199,21 +235,13 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
         if (!_keyFlag)
         {
             RouteSearch();
-            if ((destinationPos.x >= 0 && destinationPos.x <= 5) && (destinationPos.z <= 5 && destinationPos.z >= 0))
-            {
-                DestinationAreaEvent(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z));
-                if (_destinationarea)
-                {
-                    anim.SetTrigger("KeyGet");
-                    yield return new WaitForSeconds(1f);
-                    anim.SetTrigger("Idle");
-                    destinationPos = mousePos;//一度検索結果を破棄
-                    yield return new WaitForSeconds(2f);
-                    MouseMove();
-                }
-            }
+            anim.SetTrigger("KeyGet");
+            yield return new WaitForSeconds(1f);
+            anim.SetTrigger("Idle");
+            SoundManager.Instance.PlaySE(SEType.KeyGet);
+            yield return new WaitForSeconds(0.5f);
+            MouseMove();
             //ここに鍵取得の演出をいれる
-
             _keyFlag = true;
         }
         else
@@ -225,12 +253,14 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
     /// <summary>
     /// ゲームクリアの判定
     /// </summary>
-
-    public void ClearChack()
+    public void ClearCheck()
     {
         if (_keyFlag)
         {
             Debug.Log("ゲームクリア");
+            anim.SetTrigger("KeyGet");
+            
+            GameManager.Instance.GameClear().Forget();
         }
         else
         {
@@ -242,13 +272,59 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
     /// </summary>
     public IEnumerator Death()
     {
+        _damage = true;
         anim.SetTrigger("Death");
+        //SE追加予定
+        SoundManager.Instance.PlaySE(SEType.SE17);
         _keyFlag = false;
-        _damage = false;
-        yield return new WaitForSeconds(2f);
-        GameManager.Instance.TurnComplete();
-        gameObject.SetActive(false);
+        yield return new WaitForSeconds(1.5f);
+        //非表示の処理をスケールで対応
+        yield return transform.DOScale(Vector3.zero, 0.5f);
+        
+        GameManager.Instance.GameOver().Forget();
+        
+        //GameManager.Instance.TurnComplete();
+        //gameObject.SetActive(false);
     }
+    /// <summary>
+    /// 指定の座標に変更する
+    /// </summary>
+    public void SetMousePosition(Vector2 pos)
+    {
+        //MousePosition = pos;
+        //mousePos.x = MousePosition.x;
+        //mousePos.z = Mathf.Abs(MousePosition.y - 6);
+        //transform.position = mousePos;
+        //mousePos.z = Mathf.Abs(MousePosition.y - 5);
+        //destinationPos = mousePos;
+
+        mousePos = StageManager.GetWorldPosition(pos) + Vector3.up * 0.5f;
+        transform.position = mousePos;
+        mousePos.z = Mathf.Abs(pos.y - 5);
+        
+        //角度を初期角度、サイズを0に変更し、その後1秒かけてもとのサイズに戻す
+        transform.rotation = startQuaternion;
+        transform.localScale = Vector3.zero;
+        transform.DOScale(new Vector3(1, 1, 1),0.5f);    
+    }
+    /// <summary>
+    /// マウスの向きを指定の角度に変更する
+    /// </summary>
+    /// <param name="rotate"></param>
+    public void SetMouseRotation(int rotate)
+    {
+        if(rotate % 90 != 0)
+        {
+            Debug.LogError("不正な値です");
+            return;
+        }
+        transform.rotation = Quaternion.Euler(0,rotate, 0);
+
+    }
+    /// <summary>
+    /// マウスが移動した先での処理を決定する
+    /// </summary>
+    /// <param name="stagetype"></param>
     private async void MouseAreaEvent(StageObjectType? stagetype)
     {
         var pos = mousePos;
@@ -264,12 +340,17 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
             {
                 case StageObjectType.Key:
                 case StageObjectType.MagicCircle:
+                    dynamicStageObject.MoveToCell();
+                    break;
                 case StageObjectType.Magma:
                 case StageObjectType.Abyss:
                 case StageObjectType.Pond:
                 case StageObjectType.Monster:
                 case StageObjectType.Flame:
-                    dynamicStageObject.MoveToCell();
+                    if(dynamicStageObject.isMovedDeath())
+                    {
+                        dynamicStageObject.MoveToCell();
+                    }
                     break;
                 case StageObjectType.None:
                 case StageObjectType.Grassland:
@@ -285,6 +366,10 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
             Debug.LogError("このエリアには侵入できません");
         }
     }
+    /// <summary>
+    /// マウスが移動する際に移動可能かどうかを判定する
+    /// </summary>
+    /// <param name="stagetype"></param>
     private void DestinationAreaEvent(StageObjectType? stagetype)
     {
         var pos = destinationPos;
@@ -310,7 +395,10 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
                 case StageObjectType.Pond:
                 case StageObjectType.Monster:
                 case StageObjectType.Flame:
-                    _damage = true;
+                    if(dynamicStageObject.isMovedDeath())
+                    {
+                        _damage = true;
+                    }
                     break;
                 default:
                     Debug.LogError("このエリアには侵入できません");

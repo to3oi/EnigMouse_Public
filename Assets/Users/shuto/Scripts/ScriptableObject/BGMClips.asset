@@ -13,5 +13,11 @@ MonoBehaviour:
   m_Name: BGMClips
   m_EditorClassIdentifier: 
   bgmClip:
-  - BGMType: 0
-    clip: {fileID: 8300000, guid: 538629107d62f894ea50bc29f9e50a99, type: 3}
+  - BGMType: 1
+    clip: {fileID: 8300000, guid: 39efa978ca2326947996fc8f94d271b7, type: 3}
+  - BGMType: 2
+    clip: {fileID: 8300000, guid: b57b24828c6da7340ba886cfcd23570c, type: 3}
+  - BGMType: 3
+    clip: {fileID: 8300000, guid: 4b38c2cbcf53cc94d9c4db11a05d3af2, type: 3}
+  - BGMType: 4
+    clip: {fileID: 8300000, guid: 9387ae0035a535f4db136646c67e3433, type: 3}

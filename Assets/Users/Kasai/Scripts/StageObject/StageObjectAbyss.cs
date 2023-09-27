@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UniRx;
 
 public class StageObjectAbyss : BaseStageObject
 {
@@ -9,6 +8,7 @@ public class StageObjectAbyss : BaseStageObject
     /// </summary>
     private bool _isPassable = false;
     private int _PassableStartTurn = 0;
+    private BaseEffect _effect;
     public StageObjectAbyss(Vector2 position, int stageCreateAnimationIndex) : base(position, stageCreateAnimationIndex)
     {
 
@@ -24,14 +24,15 @@ public class StageObjectAbyss : BaseStageObject
             _isPassable = true;
             
             var position = transform.position;
-            position.y += 1f;
+            position.y += 0.5f;
 
             //エフェクトを再生
             //ここでは適当な値StageObject_Noneを使用
             //第二引数、第三引数に座標と回転を入れる
             //回転には基本的にPrefab自身の回転情報を使うQuaternion.identityを入れる
             //もし指定の方向に回転したいときのみQuaternion.Euler()などで計算して使用する
-            EffectManager.Instance.PlayEffect(EffectType.StageObject_None, position, Quaternion.identity);
+            _effect = EffectManager.Instance.PlayEffect(EffectType.Magic_Wind, position, Quaternion.identity);
+            SoundManager.Instance.PlaySE(SEType.Blowing);
         }
         stageObjectType = StageObjectType.Abyss;
         return false;
@@ -43,7 +44,7 @@ public class StageObjectAbyss : BaseStageObject
     /// <returns></returns>
     public override bool isValidMove()
     {
-        return _isPassable;
+        return true;
     }
     /// <summary>
     /// ネズミが今移動したら死亡するか判定して返す
@@ -59,6 +60,8 @@ public class StageObjectAbyss : BaseStageObject
         //ターン終了時にターンが_PassableStartTurnを越していたら通れなくする
         if (_PassableStartTurn < GameManager.Instance.Turn)
         {
+            //風のエフェクトを止める
+            _effect?.Stop();
             _isPassable = false;
         }
         await UniTask.Yield();
@@ -69,5 +72,10 @@ public class StageObjectAbyss : BaseStageObject
         {
             await Mouse.Instance.Death();
         }
+    }
+
+    void OnDestroy()
+    {
+        _effect?.Stop();
     }
 }

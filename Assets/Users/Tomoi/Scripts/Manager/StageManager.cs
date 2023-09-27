@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -50,10 +51,15 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
         new[] { 10, 9, 8, 7, 6, 5 }
     };
 
-    protected override  void Awake()
+    public BaseFrameOutline FrameOutlinePrefab
+    {
+        get { return _frameOutline; }
+    }
+    [SerializeField] private BaseFrameOutline _frameOutline;
+    protected override void Awake()
     {
         base.Awake();
-        
+
         stageRoot = new GameObject("StageRoot");
 
         loadStageMap();
@@ -123,6 +129,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
             {
                 //Mathf.Abs(y - 6)で座標を逆転させている
                 //var gameObject = new GameObject();
+                //CubeのColliderが必要なのでCubeを生成してMeshRendererを削除
                 var gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
                 gameObject.transform.position = new Vector3(x * offset, 0, Mathf.Abs(y - 6) * offset);
                 gameObject.layer = 7;
@@ -132,7 +139,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
                 gameObject.transform.parent = stageRoot.transform;
 
                 var dynamicStageObject = gameObject.AddComponent<DynamicStageObject>();
-                dynamicStageObject.Setup(new Vector2(x, y), stageCreateAnimationIndex[x][y], currentMap.y[y].x[x]);
+                dynamicStageObject.Setup(new Vector2(x, y), stageCreateAnimationIndex[y][x], currentMap.y[y].x[x]);
                 DynamicStageObjectList[y][x] = dynamicStageObject;
             }
         }
@@ -142,21 +149,42 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
         {
             foreach (var dynamicStageObject in listY)
             {
-                task.Add( dynamicStageObject.InitStageAnimation());
-            }            
+                task.Add(dynamicStageObject.InitStageAnimation());
+            }
         }
-        
+
         //すべてのオブジェクトが落ちるのを待つ
         await UniTask.WhenAll(task);
-        
+
         foreach (var listY in DynamicStageObjectList)
         {
             foreach (var dynamicStageObject in listY)
             {
                 dynamicStageObject.InitAnimation().Forget();
-            }            
+            }
         }
     }
+
+
+    /// <summary>
+    /// ステージを再生成する
+    /// </summary>
+    [ContextMenu("RegenerationStage")]
+    public async UniTask RegenerationStage()
+    {
+        var destroyStageObjectList = DynamicStageObjectList;
+
+        foreach (var listY in destroyStageObjectList)
+        {
+            foreach (var dynamicStageObject in listY)
+            {
+                dynamicStageObject.ExitStageAnimation().Forget();
+            }
+        }
+
+        await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+        await CreateStage();
+    } 
 
     /// <summary>
     /// 盤面の座標x,yからUnityのワールド空間上の座標に変換する
@@ -167,6 +195,15 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     public static Vector3 GetWorldPosition(int x, int y)
     {
         return new Vector3(x * offset, 0, Mathf.Abs(y - 6) * offset);
+    }
+    /// <summary>
+    /// 盤面の座標x,yからUnityのワールド空間上の座標に変換する
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <returns></returns>
+    public static Vector3 GetWorldPosition(Vector2 pos)
+    {
+        return new Vector3(pos.x * offset, 0, Mathf.Abs(pos.y - 6) * offset);
     }
 
     /// <summary>
@@ -180,15 +217,16 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
         return DynamicStageObjectList[y][x];
     }
 
-    /// <summary>
-    /// 修正中
-    /// ステージの情報を引数の値で更新する
-    /// </summary>
-    /// <param name="stagePos"></param>
-    /// <param name="objectType"></param>
-    public void UpdateStage(Vector2 stagePos, StageObjectType objectType)
+    [ContextMenu("reset")]
+    public void Reset()
     {
-        //currentMap.y[(int)stagePos.y].x[(int)stagePos.x] = objectType;
+        foreach (var list in DynamicStageObjectList)
+        {
+            foreach (var dynamicStageObject in list)
+            {
+                dynamicStageObject.Reset();
+            }
+        }
     }
 
     /// <summary>
@@ -197,8 +235,8 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     private void loadStageMap()
     {
         var mapIndex = StageRandomSelect();
-        defoultMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y);
-        currentMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y);
+        defoultMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y).DeepCopy();
+        currentMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y).DeepCopy();
     }
 
     /// <summary>
@@ -225,6 +263,6 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
             return null;
         }
 
-        return currentMap.y[Mathf.Abs(y - 5)].x[x];
+        return GetDynamicStageObject(x, Mathf.Abs(y - 5)).NowStageObjectType;
     }
 }

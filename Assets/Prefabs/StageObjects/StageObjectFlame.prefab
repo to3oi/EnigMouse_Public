@@ -82,7 +82,6 @@ MonoBehaviour:
   Position: {x: 0, y: 0}
   _stageObjectType: 108
   _objectRoot: {fileID: 1955807080830575626}
-  _effectFirePosition: {x: 0, y: 0, z: 0}
 --- !u!95 &7911636732617740519
 Animator:
   serializedVersion: 5
@@ -145,7 +144,7 @@ PrefabInstance:
     - target: {fileID: 6231659406355029023, guid: 4d47c6f33c2a44d4397d0b840dfb4ed8,
         type: 3}
       propertyPath: m_Name
-      value: Fram
+      value: Frame
       objectReference: {fileID: 0}
     - target: {fileID: 6715040329289107109, guid: 4d47c6f33c2a44d4397d0b840dfb4ed8,
         type: 3}
@@ -220,36 +219,6 @@ PrefabInstance:
     - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
         type: 3}
       propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalScale.x
-      value: 0.0855
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalScale.y
-      value: 0.0855
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalScale.z
-      value: 0.0855
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.42749998
-      objectReference: {fileID: 0}
-    - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,
-        type: 3}
-      propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 981947365924171524, guid: 3fe4036876503ac428ded8f32259b7de,

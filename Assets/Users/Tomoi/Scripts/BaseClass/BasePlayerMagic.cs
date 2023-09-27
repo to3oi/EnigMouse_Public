@@ -11,7 +11,7 @@ public class BasePlayerMagic : MonoBehaviour
     protected CancellationToken moveCt;
 
     [SerializeField] private ParticleSystem initCharge;
-    [SerializeField] private MagicType _magicType;
+    [SerializeField] protected MagicType _magicType;
     private EffectType eff_initCircle;
     private EffectType eff_defaultCircle;
     private EffectType eff_igniteParticle;
@@ -30,7 +30,7 @@ public class BasePlayerMagic : MonoBehaviour
     /// </summary>
     private bool isIgnite = false;
 
-    protected void Awake()
+    protected virtual void Awake()
     {
         // CancellationTokenSourceを生成
         particleCts = new CancellationTokenSource();
@@ -73,14 +73,14 @@ public class BasePlayerMagic : MonoBehaviour
         moveCts?.Cancel();
         particleCts?.Cancel();
     }
-    
+
     /// <summary>
     /// 魔法陣の展開
     /// </summary>
     public virtual void Init(Vector3 newPosition)
     {
         isIgnite = false;
-        newPosition.y += 0.1f;
+        //newPosition.y += 0.1f;
         particlePosition.position = newPosition;
         StartParticle(ParticleCancel()).Forget();
     }
@@ -100,6 +100,8 @@ public class BasePlayerMagic : MonoBehaviour
     protected virtual async UniTask StartParticle(CancellationToken token)
     {
         //Init
+        var PlaySEOnHoverHash = PlaySEOnHover();
+
         var _initCircle =
             EffectManager.Instance.PlayEffect(eff_initCircle, Vector3.zero, Quaternion.identity, particlePosition);
         var _initCharge = Instantiate(initCharge, particlePosition, false);
@@ -107,6 +109,7 @@ public class BasePlayerMagic : MonoBehaviour
         float _time = 0;
         var isNotDefaultCircle = false;
         BaseEffect _defaultCircle = null;
+
         while (_time <= storageTime)
         {
             //適当な秒数経ってからdefaultCircleを生成する
@@ -117,8 +120,10 @@ public class BasePlayerMagic : MonoBehaviour
                     particlePosition);
             }
 
+            //キャンセル処理
             if (token.IsCancellationRequested)
             {
+                SoundManager.Instance.StopSE(PlaySEOnHoverHash);
                 _initCircle.OnParticleSystemStopped();
 
                 foreach (var particle in _initCharge.GetComponentsInChildren<ParticleSystem>())
@@ -141,14 +146,17 @@ public class BasePlayerMagic : MonoBehaviour
             await UniTask.Yield();
         }
 
+        SoundManager.Instance.StopSE(PlaySEOnHoverHash);
+        var PlaySEOnFixedDurationHash = PlaySEOnFixedDuration();
+
         //Init終了
         _initCircle.OnParticleSystemStopped();
-
         //待機
         while (!isIgnite)
         {
             if (token.IsCancellationRequested)
             {
+                SoundManager.Instance.StopSE(PlaySEOnFixedDurationHash);
                 _defaultCircle.OnParticleSystemStopped();
                 ParticleRelease().Forget();
             }
@@ -161,6 +169,10 @@ public class BasePlayerMagic : MonoBehaviour
         //キャンセル処理不可
         var Ignite =
             EffectManager.Instance.PlayEffect(eff_igniteParticle, Vector3.zero, Quaternion.identity, particlePosition);
+
+        SoundManager.Instance.StopSE(PlaySEOnFixedDurationHash,1);
+        PlaySEOnRegenComplete();
+
 
         _time = 0;
         while (_time <= 1f)
@@ -210,7 +222,6 @@ public class BasePlayerMagic : MonoBehaviour
         //Release
         //Release中はキャンセルできない
         EffectManager.Instance.PlayEffect(eff_releaseCircle, Vector3.zero, Quaternion.identity, particlePosition);
-        //Instantiate(releaseCircle, particlePosition, false);
         _time = 0;
         while (_time <= 1f)
         {
@@ -226,7 +237,6 @@ public class BasePlayerMagic : MonoBehaviour
     /// <param name="newPosition"></param>
     public virtual void Move(Vector3 newPosition)
     {
-        newPosition.y += 0.1f;
         asyncMove(newPosition, MoveCancel()).Forget();
     }
 
@@ -248,4 +258,54 @@ public class BasePlayerMagic : MonoBehaviour
             await UniTask.Yield();
         }
     }
+
+    #region SE
+
+    /// <summary>
+    /// 杖を盤面にかざしたときの音を再生する
+    /// </summary>
+    protected virtual SoundHash PlaySEOnHover()
+    {
+        return null;
+    }
+
+
+    /// <summary>
+    /// 杖を一定時間固定したときの音を再生する
+    /// </summary>
+    protected virtual SoundHash PlaySEOnFixedDuration()
+    {
+        return null;
+    }
+
+    /// <summary>
+    /// 魔法が発動したときの音を再生する
+    /// </summary>
+    protected virtual SoundHash PlaySEOnRegenComplete()
+    {
+        return null;
+    }
+
+    /// <summary>
+    /// 杖を盤面にかざしたときの音を止める
+    /// </summary>
+    protected virtual void StopSEOnHover()
+    {
+    }
+
+    /// <summary>
+    /// 杖を一定時間固定したときの音を止める
+    /// </summary>
+    protected virtual void StopSEOnFixedDuration()
+    {
+    }
+
+    /// <summary>
+    /// 魔法が発動したときの音を止める
+    /// </summary>
+    protected virtual void StopSEOnRegenComplete()
+    {
+    }
+
+    #endregion
 }

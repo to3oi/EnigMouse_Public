@@ -21,6 +21,11 @@ public class BaseEffect : MonoBehaviour
         transform.localRotation = rotation;
         Effect.Play();
     }
+
+    public void Stop()
+    {
+        Effect?.Stop();
+    }
     
     /// <summary>
     /// エフェクト停止時の処理

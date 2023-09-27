@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4445206341957795864}
-  - component: {fileID: 4445206341957795865}
+  - component: {fileID: 6985381441005655722}
   m_Layer: 0
   m_Name: PlayerMagicIce
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4445206341957795865
+--- !u!114 &6985381441005655722
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,9 +41,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 4445206341957795862}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cb744bbe77a9b1f42962068457bf313c, type: 3}
+  m_Script: {fileID: 11500000, guid: 371f44995d10ca74187379027e394891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initCharge: {fileID: 6842178271535565708, guid: eb531a8d4d806d145a1c7b74735860b0,
+  initCharge: {fileID: 7352047660171297369, guid: 6424e447d9c4b7f46b87355ef04b7d9b,
     type: 3}
-  _magicType: 3
+  _magicType: 2

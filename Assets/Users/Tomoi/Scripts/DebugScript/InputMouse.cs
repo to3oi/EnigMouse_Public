@@ -19,9 +19,7 @@ public class InputMouse : IInputDataHandler
     {
         //配列をクリア
         Array.Clear(_inputArray, 0, _inputArray.Length);
-        var v3 = Input.mousePosition;
-        var offsetX = (1920 - (925)) / 2;
-        var v2 = new Vector2((v3.x - offsetX) * 0.7f, v3.y / 2 * 1.1f);
+        Vector2 v2 = Input.mousePosition;
         
         isMagic = Input.GetMouseButton(0);
         _inputArray = isMagic ? new InputData[] { new InputData(_magicType, v2) } : new InputData[] {};
@@ -30,5 +28,14 @@ public class InputMouse : IInputDataHandler
 
     public override void Init()
     {
+    }
+
+    public void ChangeMagicType()
+    {
+        _magicType++;
+        if (5 <= (int)_magicType)
+        {
+            _magicType = MagicType.Fire;
+        }
     }
 }

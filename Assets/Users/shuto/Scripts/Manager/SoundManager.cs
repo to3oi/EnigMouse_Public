@@ -1,102 +1,161 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
-using System;
 
-public class SoundManager : SingletonMonoBehaviour<SoundManager>
+public class AudioSourceInfo
+{
+    public AudioSource AudioSource;
+    public SoundHash SoundHash;
+}
+
+public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
 {
     private List<AudioSource> sounds = new List<AudioSource>();
 
     private BGMType _bgmtype;
     private SEType _setype;
 
-    private float MaxVol;
+    List<AudioSourceInfo> pyaingSEAudioSources = new List<AudioSourceInfo>();
+    List<AudioSourceInfo> pyaingBGMAudioSources = new List<AudioSourceInfo>();
 
-    public AudioClip[] clips = new AudioClip[5];
+    [SerializeField] private SEClips seClips;
 
-    List<AudioSource> pyaingSEAudioSources = new List<AudioSource>();
-    List<AudioSource> pyaingBGMAudioSources = new List<AudioSource>();
+    [SerializeField] private BGMClips bgmClips;
 
-    [SerializeField]
-    private SEClips seClips;
-
-    [SerializeField]
-    private BGMClips bgmClips;
-
-    // Start is called before the first frame update
     void Start()
     {
         //画面遷移してもオブジェクトが壊れないようにする
         DontDestroyOnLoad(gameObject);
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i <= 5; i++)
         {
             var audioSource = gameObject.AddComponent<AudioSource>();
             audioSource.playOnAwake = false;
             sounds.Add(audioSource);
         }
-        //sounds = GetComponents<AudioSource>();
-        sounds[1].clip = clips[1];
-        sounds[2].clip = clips[2];
-        sounds[3].clip = clips[3];
-        sounds[4].clip = clips[4];
-        sounds[5].clip = clips[5];
     }
 
-    public void PlaySE(SEType seType)
+    public SoundHash PlaySE(SEType seType)
     {
-        AudioSource audioSource = GetAudioSource();
+        AudioSource audioSource = GetAudioSourceSE();
 
-        foreach (var seClip in seClips.seClip)
+        SEClip seClip = null;
+
+        for (int i = 0; i < seClips.seClip.Count; i++)
         {
-            if (seClip.SEType == seType)
+            if (seClips.seClip[i].SEType == seType)
             {
-                audioSource.clip = seClip.clip;
-                audioSource.Play();
-                pyaingSEAudioSources.Add(audioSource);
-                return;
+                seClip = seClips.seClip[i];
+                break;
+            }
+        }
+
+        audioSource.clip = seClip?.clip;
+        audioSource.Play();
+        var asInfo = new AudioSourceInfo
+        {
+            AudioSource = audioSource,
+            SoundHash = new SoundHash()
+        };
+
+        pyaingSEAudioSources.Add(asInfo);
+        return asInfo.SoundHash;
+    }
+
+    public SoundHash PlayBGM(BGMType bgmType)
+    {
+        AudioSource audioSource = GetAudioSourceBGM();
+        BGMClip bgmClip = null;
+
+        for (int i = 0; i < bgmClips.bgmClip.Count; i++)
+        {
+            if (bgmClips.bgmClip[i].BGMType == bgmType)
+            {
+                bgmClip = bgmClips.bgmClip[i];
+                break;
+            }
+        }
+
+        audioSource.clip = bgmClip?.clip;
+        audioSource.Play();
+        var asInfo = new AudioSourceInfo
+        {
+            AudioSource = audioSource,
+            SoundHash = new SoundHash()
+        };
+            pyaingBGMAudioSources.Add(asInfo);
+        return asInfo.SoundHash;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="soundHash"></param>
+    /// <param name="fadeTime">SE消滅する時間</param>
+    public void StopSE(SoundHash soundHash,float fadeTime = 0.25f)
+    {
+        AudioSourceInfo asInfo = null;
+        for (int i = 0; i < pyaingSEAudioSources.Count; i++)
+        {
+            if (pyaingSEAudioSources[i].SoundHash == soundHash && pyaingSEAudioSources[i].AudioSource.isPlaying)
+            {
+                asInfo = pyaingSEAudioSources[i];
+                DOVirtual.Float(asInfo.AudioSource.volume, 0, fadeTime, v =>
+                {
+                    asInfo.AudioSource.volume = v;
+                    if (v == 0)
+                    {
+                        asInfo.AudioSource.Stop();
+                        if (asInfo != null)
+                        {
+                            pyaingSEAudioSources.Remove(asInfo);
+                        }
+                    }
+                });
             }
         }
     }
 
-    public void PlayBGM(BGMType bgmType)
-    {
-        AudioSource audioSource = GetAudioSource();
 
-        foreach (var bgmClip in bgmClips.bgmClip)
+    public void StopBGM(SoundHash soundHash)
+    {
+        
+        AudioSourceInfo asInfo = null;
+        for (int i = 0; i < pyaingBGMAudioSources.Count; i++)
         {
-            if (bgmClip.BGMType == bgmType)
+            if (pyaingBGMAudioSources[i].SoundHash == soundHash && pyaingBGMAudioSources[i].AudioSource.isPlaying)
             {
-                audioSource.clip = bgmClip.clip;
-                audioSource.Play();
-                pyaingBGMAudioSources.Add(audioSource);
-                return;
+                asInfo = pyaingBGMAudioSources[i];
+                DOVirtual.Float(asInfo.AudioSource.volume, 0, 0.25f, v =>
+                {
+                    asInfo.AudioSource.volume = v;
+                    if (v == 0)
+                    {
+                        asInfo.AudioSource.Stop();
+                        if (asInfo != null)
+                        {
+                            pyaingBGMAudioSources.Remove(asInfo);
+                        }
+                    }
+                });
             }
         }
     }
 
-    public void StopSE(SEType seType)
+
+    private AudioSource GetAudioSourceSE()
     {
-        foreach (var audioSource in pyaingSEAudioSources)
-        {
-            if (audioSource.isPlaying)
-            {
-                audioSource.Stop();
-            }
-            pyaingSEAudioSources.Remove(audioSource);
-        }
+        var audioSource = GetAudioSource();
+        audioSource.loop = false;
+        audioSource.volume = 1.0f;
+        return audioSource;
     }
 
-
-    public void StopBGM(BGMType bgmType)
+    private AudioSource GetAudioSourceBGM()
     {
-        foreach (var audioSource in pyaingBGMAudioSources)
-        {
-            if (audioSource.isPlaying)
-            {
-                audioSource.Stop();
-            }
-            pyaingBGMAudioSources.Remove(audioSource);
-        }
+        var audioSource = GetAudioSource();
+        audioSource.loop = true;
+        audioSource.volume = 0.1f;
+        return audioSource;
     }
 
     private AudioSource GetAudioSource()
@@ -105,53 +164,34 @@ public class SoundManager : SingletonMonoBehaviour<SoundManager>
         {
             if (!audio.isPlaying)
             {
+                audio.volume = 1;
                 return audio;
             }
         }
+
         var audioSource = gameObject.AddComponent<AudioSource>();
         audioSource.playOnAwake = false;
+        audioSource.volume = 1;
         sounds.Add(audioSource);
         return audioSource;
     }
 
-    //最大音量変更
-    public void SetMaxVol(float _vol)
+    public void AllStopSE()
     {
-        //ボリュームの最大値超過チェック
-        if(_vol >= 1.0f)
+        foreach (var asInfo in pyaingSEAudioSources)
         {
-            _vol = 1.0f;
+            DOVirtual.Float(asInfo.AudioSource.volume, 0, 0.25f, v =>
+            {
+                asInfo.AudioSource.volume = v;
+                if (v == 0)
+                {
+                    asInfo.AudioSource.Stop();
+                    if (asInfo != null)
+                    {
+                        pyaingSEAudioSources.Remove(asInfo);
+                    }
+                }
+            });
         }
-
-        //ボリュームの反映
-        MaxVol = _vol;
     }
-
-    // 中に記述された処理が一定間隔で繰り返し実行される
-    //void Update()
-    //{
-    //    //音源の重複無しで再生
-    //    if (Input.GetKeyDown(KeyCode.Alpha1))
-    //    {
-    //        sounds[0].Play();
-    //    }
-    //    if (Input.GetKeyDown(KeyCode.Alpha2))
-    //    {
-    //        sounds[1].Play();
-    //    }
-
-    //    //音源の重複ありで再生
-    //    if (Input.GetKeyDown(KeyCode.Alpha3))
-    //    {
-    //        sounds[0].PlayOneShot(clips[0]);
-    //    }
-    //    if (Input.GetKeyDown(KeyCode.Alpha4))
-    //    {
-    //        //soundsは[0]でも[1]でもどちらも可。
-    //        sounds[0].PlayOneShot(clips[1]);
-    //    }
-
-
-    //}
-
 }
