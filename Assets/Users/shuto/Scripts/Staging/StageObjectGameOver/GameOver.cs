@@ -25,8 +25,7 @@ public class GameOver : MonoBehaviour
         for (int i = 0; i < 30; i++)
         {
             SoundManager.Instance.PlaySE(SEType.CountDown);
-            token.ThrowIfCancellationRequested();
-            await UniTask.Delay(TimeSpan.FromSeconds(1));
+            await UniTask.Delay(TimeSpan.FromSeconds(1),cancellationToken:token);
         }
     }
 

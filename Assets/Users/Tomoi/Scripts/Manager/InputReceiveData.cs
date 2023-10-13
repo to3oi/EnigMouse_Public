@@ -23,14 +23,11 @@ public class InputReceiveData : IInputDataHandler
     }
     void OnReceive(byte[] bytes)
     {
-        //Debug.Log("OnReceive");
-
         if (mUDPReceiver == null)
         {
             return;
         }
         isReceived = true;
-        //Debug.Log("デシリアライズ");
         deserializedList.Clear();
         // デシリアライズ
         deserializedList = MessagePackSerializer.Deserialize<List<ReceiveData>>(bytes);
@@ -45,7 +42,6 @@ public class InputReceiveData : IInputDataHandler
 
         //信頼度でソート
         if(deserializedList.Count == 0) { return oInputData.ToArray(); }
-        //deserializedList.Sort((a, b) => a.Confidence.CompareTo(b));
         foreach (var receiveData in deserializedList)
         {
             var magicType = convertLabel2MagicType(receiveData.Label);

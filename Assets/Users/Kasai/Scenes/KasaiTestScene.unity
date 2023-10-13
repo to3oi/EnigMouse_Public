@@ -643,6 +643,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a518e9942cd3d3429db82356305d8c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _damage: 0
   runSpead: 1
   rotateSpead: 0.7
   MousePosition: {x: 0, y: 0}
@@ -1004,6 +1005,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1735675731}
   - component: {fileID: 1735675733}
+  - component: {fileID: 1735675734}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -1041,6 +1043,18 @@ MonoBehaviour:
   TestPos: {x: 1, y: 2}
   celltype: 0
   magictype: 4
+--- !u!114 &1735675734
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1735675729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bf535cf443e6e50498c5ff98e1e3d278, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3921215218329177869
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -36,7 +36,7 @@ public class StageObjectGrassland : BaseStageObject
             //StageObjectWoodを呼び出す
             //stageObjectWood.stageObjectGrassland = 15f;
             stageObjectType = StageObjectType.Wood;
-            SoundManager.Instance.PlaySE(SEType.GrassToWood);
+            SoundManager.Instance.PlaySE(SEType.SE20);
             return true;
         }
 

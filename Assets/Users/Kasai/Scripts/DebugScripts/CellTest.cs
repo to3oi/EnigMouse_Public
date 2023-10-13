@@ -8,7 +8,7 @@ public class CellTest : MonoBehaviour
     private StageManager stageManager;
     private DynamicStageObject dynamicStageObject;
     public Vector2 TestPos = Vector2.zero;
-    private bool fadebool = true;
+    //private bool fadebool = true;
     //public Vector2 MagicVec = Vector2.zero;
     public enum Cell
     {
@@ -38,7 +38,6 @@ public class CellTest : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.Space))
         {
             dynamicStageObject = stageManager.GetDynamicStageObject((int)TestPos.x, (int)TestPos.y);
-            //Debug.Log(dynamicStageObject + "\n" + stageManager.GetStageObjectType((int)TestPos.x, (int)Mathf.Abs(TestPos.y - 5)));
             Check(magictype,celltype);
 
         }
@@ -48,11 +47,12 @@ public class CellTest : MonoBehaviour
         }
         if (Input.GetKeyDown(KeyCode.F2))
         {
-            SceneManager.Instance.FadeIn();
+            SoundManager.Instance.PlaySE(SEType.SE17);
+            SoundManager.Instance.PlaySE(SEType.SE18);
         }
         if (Input.GetKeyDown(KeyCode.F3))
         {
-            SceneManager.Instance.FadeOut();
+            Mouse.Instance.Death();
         }
         /*if (Input.GetKeyDown(KeyCode.Tab))
         {

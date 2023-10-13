@@ -113,6 +113,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Position: {x: 0, y: 0}
   _stageObjectType: 104
+  _monsterAnimator: {fileID: 5708182724253688840}
   _monsterRoot: {fileID: 1341076023942587592}
   _offsetObject: {fileID: 0}
   RotationTarget: {fileID: 0}
@@ -251,6 +252,12 @@ GameObject:
 --- !u!4 &1862138550570745458 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 178560101459360467, guid: a48631e259d0486fa83621f7d8f36e72,
+    type: 3}
+  m_PrefabInstance: {fileID: 1994525440489718945}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &5708182724253688840 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 6096312193273766057, guid: a48631e259d0486fa83621f7d8f36e72,
     type: 3}
   m_PrefabInstance: {fileID: 1994525440489718945}
   m_PrefabAsset: {fileID: 0}

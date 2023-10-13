@@ -6,7 +6,7 @@ using System;
 
 public class SceneManager : SingletonMonoBehaviour<SceneManager>
 {
-    private GameObject canvas;
+    //private GameObject canvas;
     [SerializeField] private float _fadeTime = 1;
     private bool _alpha = false;
     private bool _fadeColorToggle = true;
@@ -36,7 +36,6 @@ public class SceneManager : SingletonMonoBehaviour<SceneManager>
             await UniTask.Delay(TimeSpan.FromSeconds(_fadeTime));
         }
         _alpha = isAlpha;
-        canvas = null;
         DOTween.KillAll();//鍵の回転アニメーションか何かがシーン移動時にも動き続けていたので停止
         UnityEngine.SceneManagement.SceneManager.LoadScene(sceneID);
     }

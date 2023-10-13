@@ -141,6 +141,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         EffectManager.Instance.PlayEffect(EffectType.Magic_Wind_releaseCircle, pos, Quaternion.identity);
         MagicPosition[3].gameObject.SetActive(false);
         InputManager.Instance.ResetMagicData(MagicType.Wind);
+        await UniTask.Delay(TimeSpan.FromSeconds(3));
 
         //TODO:シーン移動
         SoundManager.Instance.StopBGM(BgmHash);
@@ -152,6 +153,8 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         //初期化
         _camera = Camera.main;
 
+        AddInputEvent();
+        
         //魔法陣を生成するオブジェクトを作成
         _firePlayerMagic = Instantiate(_firePlayerMagic);
         _icePlayerMagic = Instantiate(_icePlayerMagic);
@@ -161,13 +164,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         BgmHash = SoundManager.Instance.PlayBGM(BGMType.BGM1);
         TitleProgressStart(TitleProgressCancel()).Forget();
     }
-
-    void OnDestroy()
-    {
-        //GameObject破棄時にキャンセル実行
-        gameProgressCts?.Cancel();
-    }
-
+    
     private Camera _camera;
 
 
@@ -184,19 +181,11 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
     /// </summary>
     /// <param name="pos">画面上の座標</param>
     /// <param name="magicType">魔法の種類</param>
-    public void Magic_StartCoordinatePause(Vector2 pos, MagicType magicType)
-    {Debug.Log($"MagicType :{magicType})");
-        if (canUseMagicType != magicType)
-        {
-            return;
-        }
+    private void Magic_StartCoordinatePause(Vector2 pos, MagicType magicType)
+    {
+        if (canUseMagicType != magicType) { return; }
+        if (isMagicActivation) { return; }
 
-        if (isMagicActivation)
-        {
-            return;
-        }
-
-        Debug.Log("Magic_StartCoordinatePause");
         var res = GetMagicPoint(pos);
         if (res.isHitArea)
         {
@@ -209,19 +198,11 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
     /// </summary>
     /// <param name="pos">画面上の座標</param>
     /// <param name="magicType">魔法の種類</param>
-    public void Magic_CoordinatePaused(Vector2 pos, MagicType magicType)
+    private void Magic_CoordinatePaused(Vector2 pos, MagicType magicType)
     {
-        if (canUseMagicType != magicType)
-        {
-            return;
-        }
+        if (canUseMagicType != magicType) { return; }
+        if (isMagicActivation) { return; }
 
-        if (isMagicActivation)
-        {
-            return;
-        }
-
-        Debug.Log("Magic_CoordinatePaused");
         var res = GetMagicPoint(pos);
         if (res.isHitArea)
         {
@@ -229,26 +210,23 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         }
     }
 
+    private void Magic_PauseCompleted_Start(Vector2 pos, Vector2 vector, MagicType magicType)
+    {
+        if (canUseMagicType != magicType) { return; }
+        if (isMagicActivation) { return; }
+
+        Magic_PauseCompleted(pos,vector,magicType).Forget();
+    }
+    
     /// <summary>
     /// 魔法の停止完了
     /// </summary>
     /// <param name="pos">画面上の座標</param>
     /// <param name="vector">魔法発動方向のベクトル</param>
     /// <param name="magicType">魔法の種類</param>
-    public async UniTask Magic_PauseCompleted(Vector2 pos, Vector2 vector, MagicType magicType)
+    private async UniTask Magic_PauseCompleted(Vector2 pos, Vector2 vector, MagicType magicType)
     {
-        if (canUseMagicType != magicType)
-        {
-            return;
-        }
-
-        if (isMagicActivation)
-        {
-            return;
-        }
-
         // ここで魔法の種類と発動方向を引数で取得する
-        Debug.Log("Magic_PauseCompleted");
         var res = GetMagicPoint(pos);
         if (res.isHitArea)
         {
@@ -279,7 +257,6 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
     /// <param name="magicType">魔法の種類</param>
     public void Magic_CancelCoordinatePause(Vector2 pos, MagicType magicType)
     {
-        Debug.Log("Magic_CancelCoordinatePause");
         GetPlayerMagic(magicType).Release();
     }
 
@@ -385,5 +362,31 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         _windPlayerMagic.Release();
     }
 
+    #endregion
+    
+    #region イベント
+
+    private void AddInputEvent()
+    {
+        InputManager.Instance.Magic_StartCoordinatePause += Magic_StartCoordinatePause;
+        InputManager.Instance.Magic_CoordinatePaused += Magic_CoordinatePaused;
+        InputManager.Instance.Magic_PauseCompleted += Magic_PauseCompleted_Start;
+    }
+
+    private void RemoveInputEvent()
+    {
+        InputManager.Instance.Magic_StartCoordinatePause -= Magic_StartCoordinatePause;
+        InputManager.Instance.Magic_CoordinatePaused -= Magic_CoordinatePaused;
+        InputManager.Instance.Magic_PauseCompleted -= Magic_PauseCompleted_Start;
+    }
+    
+    
+    void OnDestroy()
+    {
+        //GameObject破棄時にキャンセル実行
+        gameProgressCts?.Cancel();
+
+        RemoveInputEvent();
+    }
     #endregion
 }

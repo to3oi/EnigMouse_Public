@@ -12,7 +12,7 @@ public class StageObjectMagma : BaseStageObject
         if (type == MagicType.Water)
         {
             stageObjectType = StageObjectType.Rock;
-            SoundManager.Instance.PlaySE(SEType.MagmaToRock);
+            SoundManager.Instance.PlaySE(SEType.SE19);
             return true;
         }
 

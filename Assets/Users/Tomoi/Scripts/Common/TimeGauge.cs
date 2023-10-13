@@ -8,11 +8,16 @@ public class TimeGauge : MonoBehaviour
 
     private float maxTime;
     private float gaugeTime;
+    [SerializeField]
+    private bool isSetting;
 
     private void Start()
     {
-        maxTime = GameManager.Instance.MaxTime;
-        gaugeTime = maxTime / 4;
+        if (!isSetting)
+        {
+            maxTime = GameManager.Instance.MaxTime;
+            gaugeTime = maxTime / 4;
+        }
 
         for (int i = 0; i < gaugeMeshRenderers.Count; i++)
         {
@@ -23,6 +28,7 @@ public class TimeGauge : MonoBehaviour
 
     private void Update()
     {
+        if (isSetting) {return;}
         if (GameManager.Instance.Timer.isTimer)
         {
             var i = 3 - (int)(GameManager.Instance.Timer.TimeLimit / gaugeTime);

@@ -46,7 +46,7 @@ public class StageObjectIce : BaseStageObject
             _effect = EffectManager.Instance.PlayEffect(EffectType.Magic_Fire, position, Quaternion.identity);
 
             stageObjectType = StageObjectType.None;
-            SoundManager.Instance.PlaySE(SEType.Melt);
+            SoundManager.Instance.PlaySE(SEType.SE23);
             return true;
         }
 

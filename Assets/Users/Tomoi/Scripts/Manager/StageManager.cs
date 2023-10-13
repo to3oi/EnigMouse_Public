@@ -71,7 +71,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     /// <returns></returns>
     int StageRandomSelect()
     {
-        return Random.Range(0, StageMaps.Instance.StageMapList.Count - 1);
+        return Random.Range(0, StageMaps.Instance.StageMapList.Count);
     }
 
     /// <summary>

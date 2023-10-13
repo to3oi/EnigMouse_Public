@@ -1,0 +1,22 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:GroupBox name="Root" view-data-key="Root" style="padding-left: 0; padding-right: 0; padding-top: 0; padding-bottom: 0; margin-left: 30%; margin-right: 30%; margin-top: auto; margin-bottom: auto; width: auto; height: auto; color: rgb(255, 255, 255); background-image: none; background-color: rgba(255, 255, 255, 0.57); -unity-background-image-tint-color: rgb(255, 255, 255);">
+        <ui:Label text="出力される映像をマスクする領域を指定" display-tooltip-when-elided="true" style="font-size: 24px; color: rgb(0, 0, 0); -unity-font-style: bold; -unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/NotoSansJP-VariableFont_wght%20SDF-font.asset?fileID=11400000&amp;guid=8493ad6da8010ce42bff31b4db66709e&amp;type=2#NotoSansJP-VariableFont_wght SDF&apos;);" />
+        <ui:GroupBox name="Top" style="-unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/NotoSansJP-VariableFont_wght%20SDF-font.asset?fileID=11400000&amp;guid=8493ad6da8010ce42bff31b4db66709e&amp;type=2#NotoSansJP-VariableFont_wght SDF&apos;); -unity-font-style: bold;">
+            <ui:Label text="Top" display-tooltip-when-elided="true" name="Top_Label" style="color: rgb(0, 0, 0); font-size: 24px;" />
+            <ui:Slider picking-mode="Ignore" value="0" high-value="540" name="Top_Value" view-data-key="Top_Value" style="opacity: 1; color: rgb(255, 255, 255);" />
+        </ui:GroupBox>
+        <ui:GroupBox name="Down" style="-unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/NotoSansJP-VariableFont_wght%20SDF-font.asset?fileID=11400000&amp;guid=8493ad6da8010ce42bff31b4db66709e&amp;type=2#NotoSansJP-VariableFont_wght SDF&apos;); -unity-font-style: bold;">
+            <ui:Label text="Down" display-tooltip-when-elided="true" name="Down_Label" style="color: rgb(0, 0, 0); font-size: 24px;" />
+            <ui:Slider picking-mode="Ignore" value="0" high-value="540" name="Down_Value" view-data-key="Down_Value" style="opacity: 1; color: rgb(255, 255, 255);" />
+        </ui:GroupBox>
+        <ui:GroupBox name="Right" style="-unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/NotoSansJP-VariableFont_wght%20SDF-font.asset?fileID=11400000&amp;guid=8493ad6da8010ce42bff31b4db66709e&amp;type=2#NotoSansJP-VariableFont_wght SDF&apos;); -unity-font-style: bold;">
+            <ui:Label text="Right" display-tooltip-when-elided="true" name="Right_Label" style="color: rgb(0, 0, 0); font-size: 24px;" />
+            <ui:Slider picking-mode="Ignore" value="0" high-value="720" name="Right_Value" view-data-key="Right_Value" style="opacity: 1; color: rgb(255, 255, 255);" />
+        </ui:GroupBox>
+        <ui:GroupBox name="Left" style="-unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/NotoSansJP-VariableFont_wght%20SDF-font.asset?fileID=11400000&amp;guid=8493ad6da8010ce42bff31b4db66709e&amp;type=2#NotoSansJP-VariableFont_wght SDF&apos;); -unity-font-style: bold;">
+            <ui:Label text="Left" display-tooltip-when-elided="true" name="Left_Label" style="color: rgb(0, 0, 0); font-size: 24px;" />
+            <ui:Slider picking-mode="Ignore" value="0" high-value="720" name="Left_Value" view-data-key="Left_Value" style="opacity: 1; color: rgb(255, 255, 255);" />
+        </ui:GroupBox>
+        <ui:Button text="Next" display-tooltip-when-elided="true" name="Next" view-data-key="Next" style="margin-left: 80%; -unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/NotoSansJP-VariableFont_wght%20SDF-font.asset?fileID=11400000&amp;guid=8493ad6da8010ce42bff31b4db66709e&amp;type=2#NotoSansJP-VariableFont_wght SDF&apos;); -unity-font-style: bold; color: rgba(0, 0, 0, 255);" />
+    </ui:GroupBox>
+</ui:UXML>

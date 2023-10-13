@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class MagicData
@@ -54,11 +53,6 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
     [SerializeField] private float _staticCapacity = 7.5f;
 
     /// <summary>
-    /// 魔法発動時に魔法の発動方向を指定する距離
-    /// </summary>
-    [SerializeField] private float _magicActiveCapacity = 5.0f;
-
-    /// <summary>
     /// 静止している時間
     /// </summary>
     [SerializeField] private float _staticDuration = 2.5f;
@@ -67,11 +61,6 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
     /// 魔法陣作成までの待機時間
     /// </summary>
     [SerializeField] private float _delayInitMagicCircle = 0.3f;
-
-    /// <summary>
-    /// 魔法発動時に移動させる距離
-    /// </summary>
-    [SerializeField] private float _magicActivationRange = 5f;
 
     /// <summary>
     /// デバッグ用
@@ -83,22 +72,8 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
     /// <summary>
     /// trueのとき入力をマウスで行う
     /// </summary>
-    [SerializeField] private bool isDebugInput =
-# if UNITY_EDITOR
-        true;
-# else
-    false;
-#endif
+    [SerializeField] private bool isUseMouseInput = true;
 
-    /// <summary>
-    /// trueのとき入力で魔法を発動する
-    /// </summary>
-    [SerializeField] private bool isMagicLogic =
-# if UNITY_EDITOR
-        true;
-# else
-    false;
-#endif
     private bool isUpdateInputData = false;
 
 
@@ -125,8 +100,30 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
     private SceneList _scene;
     private bool isInputDataUpdate = false;
 
-    
-    
+    #region UniRx
+
+    /// <summary>
+    /// MagicTypeに対応した座標を常に返す
+    /// </summary>
+    public Action<Vector2, MagicType> MagicPositionAlways;
+
+    /// <summary>
+    /// 魔法の座標の停止開始
+    /// </summary>
+    public Action<Vector2, MagicType> Magic_StartCoordinatePause;
+
+    /// <summary>
+    /// 魔法の座標の停止中
+    /// </summary>
+    public Action<Vector2, MagicType> Magic_CoordinatePaused;
+
+    /// <summary>
+    /// 魔法の停止完了
+    /// </summary>
+    public Action<Vector2, Vector2, MagicType> Magic_PauseCompleted;
+
+    #endregion
+
     protected override void Awake()
     {
         base.Awake();
@@ -146,7 +143,7 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
         ScaleOffsetX = PlayerPrefs.GetFloat("ScaleOffsetX", 1);
         ScaleOffsetY = PlayerPrefs.GetFloat("ScaleOffsetY", 1);
     }
-    
+
     /// <summary>
     /// 現在のシーンを内部的に変更する
     /// これによりInputの処理が変わる
@@ -177,7 +174,7 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
                 { MagicType.Wind, new MagicData() }
             };
     }
-    
+
     /// <summary>
     /// 現在入力されている情報をリセットする
     /// </summary>
@@ -195,10 +192,10 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
             return;
         }
 
-        if (isDebugInput)
+        if (isUseMouseInput)
         {
             //入力データの取得
-            //デバッグ用にUpdateでマウスの座標を処理
+            //Updateでマウスの座標を処理
             if (isUpdateInputData)
             {
                 UpdateInputDataArrays(_inputMouse);
@@ -234,9 +231,8 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
     {
         switch (_scene)
         {
+            case SceneList.Setting:
             case SceneList.Title:
-            //TitleInput(inputDataHandler);
-            //break;
             case SceneList.MainGame:
                 InputNotify(inputDataHandler);
                 break;
@@ -300,13 +296,8 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
 
             checkMagicType[(int)inputData.MagicType] = true;
 
-            //Outlineを表示
-            switch (_scene)
-            {
-                case SceneList.MainGame:
-                    GameManager.Instance.SetOutline(GetCalibratedVector2(inputData.Pos), inputData.MagicType);
-                    break;
-            }
+            //追加されているアクションを実行
+            MagicPositionAlways?.Invoke(GetCalibratedVector2(inputData.Pos), inputData.MagicType);
 
             //静止判定
             //isInitedがTrueのときは距離の判定をLastFramePositionではなくStopPositionで行う
@@ -323,17 +314,8 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
                 {
                     magicData.StopPosition = inputData.Pos;
                     magicData.isInited = true;
-                    switch (_scene)
-                    {
-                        case SceneList.Title:
-                            TitleManager.Instance.Magic_StartCoordinatePause(GetCalibratedVector2(inputData.Pos),
-                                inputData.MagicType);
-                            break;
-                        case SceneList.MainGame:
-                            GameManager.Instance.Magic_StartCoordinatePause(GetCalibratedVector2(inputData.Pos),
-                                inputData.MagicType);
-                            break;
-                    }
+
+                    Magic_StartCoordinatePause?.Invoke(GetCalibratedVector2(inputData.Pos), inputData.MagicType);
                 }
 
                 //魔法陣を作成してから_staticDurationの秒数立ったら魔法を発動可能にする
@@ -349,25 +331,10 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
                 //魔法の発動
                 if (magicData.isMagicActive)
                 {
-                    //var v = inputData.Pos - magicData.LastPosMagicActive;
-
                     //魔法陣の発動
                     //ベクトルの概念が消えたので元々ベクトルを入れていたところには Vector2.zero を入れる
-                    switch (_scene)
-                    {
-                        case SceneList.Title:
-                            TitleManager.Instance
-                                .Magic_PauseCompleted(GetCalibratedVector2(inputData.Pos), Vector2.zero,
-                                    inputData.MagicType)
-                                .Forget();
-                            break;
-                        case SceneList.MainGame:
-                            GameManager.Instance
-                                .Magic_PauseCompleted(GetCalibratedVector2(inputData.Pos), Vector2.zero,
-                                    inputData.MagicType)
-                                .Forget();
-                            break;
-                    }
+                    Magic_PauseCompleted?.Invoke(GetCalibratedVector2(inputData.Pos), Vector2.zero,
+                        inputData.MagicType);
 
                     //このboolがtrueのときは魔法を再度発動できない
                     //魔法のパーティクルが削除されるときにリセットする処理が走る
@@ -378,17 +345,7 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
                 //魔法陣発動済みの場合魔法陣の移動をする
                 if (magicData.isInited)
                 {
-                    switch (_scene)
-                    {
-                        case SceneList.Title:
-                            TitleManager.Instance.Magic_CoordinatePaused(GetCalibratedVector2(inputData.Pos),
-                                inputData.MagicType);
-                            break;
-                        case SceneList.MainGame:
-                            GameManager.Instance.Magic_CoordinatePaused(GetCalibratedVector2(inputData.Pos),
-                                inputData.MagicType);
-                            break;
-                    }
+                    Magic_CoordinatePaused?.Invoke(GetCalibratedVector2(inputData.Pos), inputData.MagicType);
                 }
 
                 //停止開始時の時間を保持
@@ -436,22 +393,24 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
     /// <returns></returns>
     private Vector2 GetCalibratedVector2(Vector2 pos)
     {
-        //TODO:物体検出でどれくらいずれるか検証してから変更
-        //マウスのときに倍率をかけない        
-        if (!isDebugInput)
+        //入力される軸が反転しているので修正
+        if (!isUseMouseInput)
         {
             pos.y = 512 - pos.y;
         }
 
         //Kinectの方向に応じてposを回転させる
-        float sin = (float)Math.Sin(RotationOffset * (Math.PI / 180));
-        float cos = (float)Math.Cos(RotationOffset * (Math.PI / 180));
-
-        var res = new Vector2(pos.x * cos - pos.y * sin, pos.x * sin + pos.y * cos);
+        //TODO:ここでカメラの角度調整をする
+        //float sin = (float)Math.Sin(RotationOffset * (Math.PI / 180));
+        //float cos = (float)Math.Cos(RotationOffset * (Math.PI / 180));
+        float sin = (float)Math.Sin(0 * (Math.PI / 180));
+        float cos = (float)Math.Cos(0 * (Math.PI / 180));
+        var res = new Vector2(pos.x * cos + pos.y * sin, pos.x * sin + pos.y * cos);
+        
         return new Vector2((res.x + XOffset) * ScaleOffsetX, (res.y + YOffset) * ScaleOffsetY);
     }
 
-    private void OnApplicationQuit()
+    private void OnDestroy()
     {
         PlayerPrefs.SetFloat("XOffset", XOffset);
         PlayerPrefs.SetFloat("YOffset", YOffset);
@@ -459,4 +418,35 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
         PlayerPrefs.SetFloat("ScaleOffsetX", ScaleOffsetX);
         PlayerPrefs.SetFloat("ScaleOffsetY", ScaleOffsetY);
     }
-}   
+
+    /// <summary>
+    /// マウスを使用してゲームをプレイするか
+    /// </summary>
+    /// <param name="_isDebugInput"></param>
+    public void SetUseMouse(bool _isDebugInput)
+    {
+        isUseMouseInput = _isDebugInput;
+    }
+
+    /// <summary>
+    /// 補正値をセット
+    /// </summary>
+    public void SetCorrection(Vector2 position, Vector2 scale)
+    {
+        XOffset = position.x;
+        YOffset = position.y;
+        ScaleOffsetX = scale.x;
+        ScaleOffsetY = scale.y;
+    }
+
+    /// <summary>
+    /// 補正値をセット
+    /// </summary>
+    public void SetCorrection(Vector2 leftDownPosition, Vector2 rightDownPosition, Vector2 leftUpPosition,
+        Vector2 rightUpPosition, Vector2 positionOffset)
+    {
+        //TODO:角4箇所で補正をかける計算をする
+        XOffset = positionOffset.x;
+        YOffset = positionOffset.y;
+    }
+}

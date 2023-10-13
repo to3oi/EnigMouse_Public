@@ -611,4 +611,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4438c9a3808df3f459048d3611c2f97e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  destinationScene: 2
+  destinationScene: 1

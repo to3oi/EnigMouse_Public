@@ -3,8 +3,6 @@
 [![EnigMouseSendMaster](https://github-readme-stats.vercel.app/api/pin/?username=to3oi&repo=EnigMouseSendMaster)](https://github.com/to3oi/EnigMouseSendMaster)
 [![EnigMouseSendClient](https://github-readme-stats.vercel.app/api/pin/?username=to3oi&repo=EnigMouseSendClient)](https://github.com/to3oi/EnigMouseSendClient)
 
-現在有料アセットのデータが欠けており正常にプレイできません。PC単体で実行出来るビルドデータを11月中旬以降公開予定ですので少々お待ちください。
-
 # 開発期間
 2023/4/28 ~
 # 開発環境

@@ -36,18 +36,10 @@ public class StageObjectFlame : BaseStageObject
     {
         if (MagicType.Wind == type && isFire) //風の魔法を受けた時の処理
         {
-            //pos = new Vector2(Position.x, Mathf.Abs(Position.y - 5));
-            //pos = new Vector2(transform.position.x,transform.position.z -1);
-            EffectManager.Instance.PlayEffect(EffectType.Magic_None, transform.position, Quaternion.identity);
 
             StopFireEffect();
 
-            //風魔法のベクトルの方向のみに変換
-            //vec = direction;
-            //vecSign(vec);
-
-            //ignition(vec);
-            SoundManager.Instance.PlaySE(SEType.BlowOut);
+            SoundManager.Instance.PlaySE(SEType.SE27);
         }
 
         if (MagicType.Water == type) //水の魔法を受けた時の処理
@@ -65,7 +57,7 @@ public class StageObjectFlame : BaseStageObject
             //TODO:変更処理がありそうだけどわからないから保留
             //stageObjectType = StageObjectType.Flame;
             //return true;
-            SoundManager.Instance.PlaySE(SEType.Extinguisher);
+            SoundManager.Instance.PlaySE(SEType.SE26);
         }
 
         stageObjectType = StageObjectType.Flame;

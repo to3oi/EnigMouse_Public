@@ -32,7 +32,7 @@ public class StageObjectAbyss : BaseStageObject
             //回転には基本的にPrefab自身の回転情報を使うQuaternion.identityを入れる
             //もし指定の方向に回転したいときのみQuaternion.Euler()などで計算して使用する
             _effect = EffectManager.Instance.PlayEffect(EffectType.Magic_Wind, position, Quaternion.identity);
-            SoundManager.Instance.PlaySE(SEType.Blowing);
+            SoundManager.Instance.PlaySE(SEType.SE25);
         }
         stageObjectType = StageObjectType.Abyss;
         return false;
@@ -76,6 +76,9 @@ public class StageObjectAbyss : BaseStageObject
 
     void OnDestroy()
     {
-        _effect?.Stop();
+        if (_effect != null)
+        {
+            _effect.Stop();
+        }
     }
 }

@@ -45,6 +45,11 @@ public partial class GameManager
     /// </summary>
     private bool isTurnComplete = false;
 
+    /// <summary>
+    /// ゲームクリアしたときにtrue
+    /// </summary>
+    private bool isGameClear = false;
+
     [SerializeField] private GameOver _gameOver;
     private GameTimer _gameTimer;
     public GameTimer Timer => _gameTimer;
@@ -74,15 +79,47 @@ public partial class GameManager
         return gameProgressCt;
     }
 
+    private CancellationTokenSource countDownProgressCts;
+    private CancellationToken countDownProgressCt;
+
+    /// <summary>
+    /// カウントダウンを停止する
+    /// </summary>
+    /// <returns></returns>
+    private CancellationToken CountDownProgressCancel()
+    {
+        //キャンセル
+        countDownProgressCts?.Cancel();
+        //新しく作成
+        countDownProgressCts = new CancellationTokenSource();
+        countDownProgressCt = countDownProgressCts.Token;
+        return countDownProgressCt;
+    }
+
+
+    #region 魔法の発動制限用の変数
+    
+    /// <summary>
+    /// 魔法が発動済みならtrue
+    /// </summary>
+    private bool[] checkMagicType;
+
+    #endregion
+    
+
     #region ゲームの進行
 
     private SoundHash BGMHash;
     private async void Start()
     {
+        AddInputEvent();
+        
         //プレイヤーの魔法陣の発動をステージ生成完了まで止める
         isMagicActivation = true;
         //初期化
         _camera = Camera.main;
+        ResetCheckMagicType();
+        
         //魔法陣を生成するオブジェクトを作成
         _firePlayerMagic = Instantiate(_firePlayerMagic);
         _waterPlayerMagic = Instantiate(_waterPlayerMagic);
@@ -110,8 +147,7 @@ public partial class GameManager
         _gameTimer.TimerStart();
         LimitReset();
         Turn = 0;
-        InitEffectUI();
-        
+
         //ゲームオーバーになるまで
         while (true)
         {
@@ -130,10 +166,8 @@ public partial class GameManager
             try
             {
                 //魔法発動を待機
-                Debug.Log($"GameProgress2 魔法発動を待機開始");
                 //この段階でキャンセル処理が入っていたらゲームの進行を停止する
                 await UniTask.WaitUntil(() => isMagicActivation);
-                Debug.Log($"GameProgress2 魔法発動を待機終了");
             }
             catch (OperationCanceledException e)
             {
@@ -146,9 +180,7 @@ public partial class GameManager
             Mouse.Instance.MouseAct();
 
             //TurnCompleteを待機
-            Debug.Log($"GameProgress2 TurnCompleteを待機開始");
             await UniTask.WaitUntil(() => isTurnComplete);
-            Debug.Log($"GameProgress2 TurnCompleteを待機終了");
 
             //ターン数チェック
             if (MaxTurn <= Turn)
@@ -172,10 +204,7 @@ public partial class GameManager
             }
 
             token.ThrowIfCancellationRequested();
-            Debug.Log($"GameProgress2 ターン終了処理");
         }
-        //TODO:ゲームクリア、ゲームオーバーの処理を未実装
-        //TODO:SingleToneなのでどこかでバグる可能性あり
     }
 
     /// <summary>
@@ -193,20 +222,20 @@ public partial class GameManager
 
     public async UniTask CountDown()
     {
-        //TODO:Tokenの置き換え
-        //現状だとカウントダウン中に盤面の再生成をするとカウントダウンが止まる
-        await _gameOver.StartCountDown(gameProgressCt);
+        await _gameOver.StartCountDown(countDownProgressCt);
     }
-    
+
     /// <summary>
     /// ゲームオーバーの処理
     /// </summary>
     public async UniTask GameOver()
     {
         var token = GameProgressCancel();
+        InitEffectUI();
+      
         //TODO:盤面の再生成とゲーム進行の開始
         await StageManager.Instance.RegenerationStage();
-
+        ResetCheckMagicType();
         //ねずみのリセット処理はStageObjectMouseのInitAnimation内で実行されます
 
         //生成が終わったらスタート
@@ -220,33 +249,43 @@ public partial class GameManager
     {
         SoundManager.Instance.StopBGM(BGMHash);
         GameProgressCancel();
-        //TODO:タイムオーバーの演出を開始
+        CountDownProgressCancel();
         _gameTimer.TimerStop();
         //SEの鳴り止みを待機
-        await UniTask.Delay(TimeSpan.FromSeconds(2.3f));
+        await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
         SoundManager.Instance.PlaySE(SEType.TimeOver);
         await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
         SoundManager.Instance.PlaySE(SEType.TimeOver);
         await _gameOver.TimeOverStart();
-        SceneManager.Instance.SceneChange(SceneList.GameOver,true,true);
+        //ゲームクリアとタイムオーバーが同時に実行されているときはゲームクリアを優先的に実行
+        if (!isGameClear)
+        {
+            SceneManager.Instance.SceneChange(SceneList.GameOver, true, true);
+        }
     }
-    
+
     /// <summary>
     /// ゲームクリアの処理
     /// </summary>
     public async UniTask GameClear()
     {
+        isGameClear = true;
         SoundManager.Instance.StopBGM(BGMHash);
         GameProgressCancel();
+        CountDownProgressCancel();
         _gameTimer.TimerStop();
 
-        //TODO:ゲームクリアの演出を開始
         SoundManager.Instance.PlaySE(SEType.GameClear);
 
         await gameClear.GameClearStart();
-        SceneManager.Instance.SceneChange(SceneList.GameClear,true,true);
+        SceneManager.Instance.SceneChange(SceneList.GameClear, true, true);
     }
 
+    private void ResetCheckMagicType()
+    {
+        checkMagicType = new[] { false, false, false, false, false };
+    }
+    
     /// <summary>
     /// Outlineを非同期で表示
     /// </summary>
@@ -272,14 +311,11 @@ public partial class GameManager
     /// </summary>
     /// <param name="pos">画面上の座標</param>
     /// <param name="magicType">魔法の種類</param>
-    public void Magic_StartCoordinatePause(Vector2 pos, MagicType magicType)
+    private void Magic_StartCoordinatePause(Vector2 pos, MagicType magicType)
     {
-        if (isMagicActivation)
-        {
-            return;
-        }
+        if (isMagicActivation) { return; }
+        if (checkMagicType[(int)magicType]) { return; }
 
-        Debug.Log("Magic_StartCoordinatePause");
         var res = GetMagicPoint(pos);
         if (res.isHitArea)
         {
@@ -292,36 +328,34 @@ public partial class GameManager
     /// </summary>
     /// <param name="pos">画面上の座標</param>
     /// <param name="magicType">魔法の種類</param>
-    public void Magic_CoordinatePaused(Vector2 pos, MagicType magicType)
+    private void Magic_CoordinatePaused(Vector2 pos, MagicType magicType)
     {
-        if (isMagicActivation)
-        {
-            return;
-        }
+        if (isMagicActivation) { return; }
+        if (checkMagicType[(int)magicType]) { return; }
 
-        Debug.Log("Magic_CoordinatePaused");
         var res = GetMagicPoint(pos);
-        if (res.isHitArea)
+        if (res.isHitArea)　
         {
             GetPlayerMagic(magicType).Move(res.position);
         }
     }
 
+    private void Magic_PauseCompleted_Start(Vector2 pos, Vector2 vector, MagicType magicType)
+    {
+        if (isMagicActivation) { return; }
+        if (checkMagicType[(int)magicType]) { return; }
+        
+        Magic_PauseCompleted(pos,vector,magicType).Forget();
+    }
     /// <summary>
     /// 魔法の停止完了
     /// </summary>
     /// <param name="pos">画面上の座標</param>
     /// <param name="vector">魔法発動方向のベクトル</param>
     /// <param name="magicType">魔法の種類</param>
-    public async UniTask Magic_PauseCompleted(Vector2 pos, Vector2 vector, MagicType magicType)
+    private async UniTask Magic_PauseCompleted(Vector2 pos, Vector2 vector, MagicType magicType)
     {
-        if (isMagicActivation)
-        {
-            return;
-        }
-
         // ここで魔法の種類と発動方向を引数で取得する
-        Debug.Log("Magic_PauseCompleted");
         var res = GetMagicPoint(pos);
         if (res.isHitArea)
         {
@@ -336,6 +370,7 @@ public partial class GameManager
             GetDynamicStageObject(pos)?.HitMagic(magicType, vector);
             MagicUsageCountUp(magicType);
             UpdateEffectUI();
+            checkMagicType[(int)magicType] = true;
 
             //TODO:すべての処理でこの時間待機することになるので要検討
             await UniTask.Delay(TimeSpan.FromSeconds(3));
@@ -355,7 +390,6 @@ public partial class GameManager
     /// <param name="magicType">魔法の種類</param>
     public void Magic_CancelCoordinatePause(Vector2 pos, MagicType magicType)
     {
-        Debug.Log("Magic_CancelCoordinatePause");
         GetPlayerMagic(magicType).Release();
     }
 
@@ -370,7 +404,6 @@ public partial class GameManager
 
         Debug.DrawRay(ray.origin, ray.direction * 10, Color.yellow);
 
-        //if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("Ground")))
         if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, LayerMask.GetMask("DynamicStageObject")))
         {
             Vector3 reverseDirection = -ray.direction;
@@ -519,42 +552,59 @@ public partial class GameManager
         EffectUI_Water?.Stop();
         EffectUI_Wind?.Stop();
 
-        //UI表示
-        EffectUI_Fire =
-            EffectManager.Instance.PlayEffect(EffectType.Fire_UI, effectUIPosition[0].position, Quaternion.identity);
-        EffectUI_Ice =
-            EffectManager.Instance.PlayEffect(EffectType.Ice_UI, effectUIPosition[1].position, Quaternion.identity);
-        EffectUI_Water =
-            EffectManager.Instance.PlayEffect(EffectType.Water_UI, effectUIPosition[2].position, Quaternion.identity);
-        EffectUI_Wind =
-            EffectManager.Instance.PlayEffect(EffectType.Wind_UI, effectUIPosition[3].position, Quaternion.identity);
+        EffectUI_Fire = null;
+        EffectUI_Ice = null;
+        EffectUI_Water = null;
+        EffectUI_Wind = null;
     }
 
     private void UpdateEffectUI()
     {
-        if (magicUsageCount <= magicUsageCountList[0])
+        if (magicUsageCount <= magicUsageCountList[0] && EffectUI_Fire == null)
         {
-            EffectUI_Fire.Stop();
+            EffectUI_Fire = EffectManager.Instance.PlayEffect(EffectType.Fire_UI, effectUIPosition[0].position, Quaternion.identity);
         }
-        if (magicUsageCount <= magicUsageCountList[1])
+        if (magicUsageCount <= magicUsageCountList[1] && EffectUI_Ice == null)
         {
-            EffectUI_Ice.Stop();
+            EffectUI_Ice = EffectManager.Instance.PlayEffect(EffectType.Ice_UI, effectUIPosition[1].position, Quaternion.identity);
         }
-        if (magicUsageCount <= magicUsageCountList[2])
+        if (magicUsageCount <= magicUsageCountList[2] && EffectUI_Water == null)
         {
-            EffectUI_Water.Stop();
+            EffectUI_Water = EffectManager.Instance.PlayEffect(EffectType.Water_UI, effectUIPosition[2].position, Quaternion.identity);
         }
-        if (magicUsageCount <= magicUsageCountList[3])
+        if (magicUsageCount <= magicUsageCountList[3] && EffectUI_Wind == null)
         {
-            EffectUI_Wind.Stop();
+            EffectUI_Wind = EffectManager.Instance.PlayEffect(EffectType.Wind_UI, effectUIPosition[3].position, Quaternion.identity);
         }
     }
 
     #endregion
 
+    #region イベント
+
+    private void AddInputEvent()
+    {
+        InputManager.Instance.MagicPositionAlways += SetOutline;
+        InputManager.Instance.Magic_StartCoordinatePause += Magic_StartCoordinatePause;
+        InputManager.Instance.Magic_CoordinatePaused += Magic_CoordinatePaused;
+        InputManager.Instance.Magic_PauseCompleted += Magic_PauseCompleted_Start;
+    }
+
+    private void RemoveInputEvent()
+    {
+        InputManager.Instance.MagicPositionAlways -= SetOutline;
+        InputManager.Instance.Magic_StartCoordinatePause -= Magic_StartCoordinatePause;
+        InputManager.Instance.Magic_CoordinatePaused -= Magic_CoordinatePaused;
+        InputManager.Instance.Magic_PauseCompleted -= Magic_PauseCompleted_Start;
+    }
+    
+    
     void OnDestroy()
     {
         //GameObject破棄時にキャンセル実行
         gameProgressCts?.Cancel();
+
+        RemoveInputEvent();
     }
+    #endregion
 }

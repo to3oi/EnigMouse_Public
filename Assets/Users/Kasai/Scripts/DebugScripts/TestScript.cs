@@ -10,7 +10,7 @@ public class TestScript : MonoBehaviour
 {
     private void Start()
     {
-        
+        SceneManager.Instance.SceneChange(SceneList.MainGame, true, true);
     }
     private void Update()
     {

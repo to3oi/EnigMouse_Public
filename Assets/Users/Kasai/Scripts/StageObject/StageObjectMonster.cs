@@ -4,6 +4,7 @@ using DG.Tweening;
 using UnityEngine;
 using Random = UnityEngine.Random;
 using UniRx;
+using System.Threading;
 
 public class StageObjectMonster : BaseStageObject
 {
@@ -26,27 +27,40 @@ public class StageObjectMonster : BaseStageObject
     [SerializeField] private Transform _offsetObject;
     [SerializeField] private Transform RotationTarget;
 
+    private CancellationTokenSource monsterAnimationCts;
+    private CancellationToken monsterAnimationCt;
+    private CancellationToken MonsterAnimationCancel()
+    {
+        //キャンセル
+        monsterAnimationCts?.Cancel();
+        //新しく作成
+        monsterAnimationCts = new CancellationTokenSource();
+        monsterAnimationCt = monsterAnimationCts.Token;
+        return monsterAnimationCt;
+    }
     private void Start()
     {
         _monsterAnimator = _monsterRoot.GetComponent<Animator>();
         _offsetObject = _monsterRoot.transform.parent;
-        ChangeAnimationLoop().Forget();
+        MonsterAnimationCancel();
+        ChangeAnimationLoop(MonsterAnimationCancel()).Forget();
     }
-
     /// <summary>
     /// isIdleMotionChangeをランダムな時間でSetTriggerする
     /// </summary>
-    private async UniTask ChangeAnimationLoop()
+    private async UniTask ChangeAnimationLoop(CancellationToken token)
     {
         while (true)
         {
             //ランダムな時間待機
-            await UniTask.Delay(TimeSpan.FromSeconds(Random.Range(15, 35)));
+            token.ThrowIfCancellationRequested();
+            await UniTask.Delay(TimeSpan.FromSeconds(Random.Range(15, 35)),cancellationToken:token);
             _monsterAnimator.SetTrigger(IsIdleMotionChange);
 
             //50%で連続再生
             //Triggerを使用してAnimationを実行するのに時間がかかるので適当な時間待機
-            await UniTask.Delay(TimeSpan.FromSeconds(3));
+            token.ThrowIfCancellationRequested();
+            await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: token);
             if (Random.Range(0, 2) == 0)
             {
                 _monsterAnimator.SetTrigger(IsIdleMotionChange);
@@ -75,27 +89,17 @@ public class StageObjectMonster : BaseStageObject
             _monsterAnimator.SetTrigger(Die);
             _monsterAnimator.SetFloat(DieType, (float)Random.Range(0, 2));
 
-            //死亡エフェクトを再生
-            PlayDieEffect().Forget();
-
-            SoundManager.Instance.PlaySE(SEType.FirePrepare);
+            SoundManager.Instance.PlaySE(SEType.SE22);
             isDie = true;
+        }
+        if(MagicType.Ice == type && isDie)
+        {
+            stageObjectType = StageObjectType.Ice;
+            return true;
         }
 
         stageObjectType = StageObjectType.Monster;
         return false;
-    }
-
-    /// <summary>
-    /// 死亡エフェクトの再生
-    /// </summary>
-    private async UniTask PlayDieEffect()
-    {
-        await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
-        var p = transform.position;
-        p.y += 1;
-        EffectManager.Instance.PlayEffect(EffectType.Die, p, Quaternion.identity);
-        
     }
 
     /// <summary>
@@ -113,7 +117,7 @@ public class StageObjectMonster : BaseStageObject
         RotationTarget = Mouse.Instance.transform;
         //ネズミを攻撃する
         _monsterAnimator.SetTrigger(IsJump);
-        _monsterAnimator.SetFloat(AttackType, (float)Random.Range(0, 2));
+        _monsterAnimator.SetFloat(AttackType, Random.Range(0, 2));
         //モンスターとネズミの方向の差のQuaternion
         var aim = RotationTarget.position - _offsetObject.position;
         aim.y = 0;
@@ -123,8 +127,10 @@ public class StageObjectMonster : BaseStageObject
         //回転の終了を待つ
         await _offsetObject.DORotateQuaternion(q, 0.1f).AsyncWaitForCompletion();
         _monsterAnimator.SetTrigger(IsAttack);
-        await UniTask.DelayFrame(14);
-
+        var delaytime = 0f;
+        //攻撃モーションごとに遅延の時間を変えたい
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
+        SoundManager.Instance.PlaySE(SEType.SE18);
         await Mouse.Instance.Death();
         //アタックアニメーションの時間待機
         //アニメーションの終了時間でawaitできるけど使用箇所ここだけになるので未使用
@@ -160,5 +166,9 @@ public class StageObjectMonster : BaseStageObject
     public override bool isMovedDeath()
     {
         return !isDie;
+    }
+    private void OnDestroy()
+    {
+        MonsterAnimationCancel();
     }
 }

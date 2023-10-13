@@ -37,16 +37,17 @@ public class StageObjectPond : BaseStageObject
         stageObjectType = StageObjectType.None;
 
         //魔法が氷のときのみ凍る
-        if (type == MagicType.Ice)
+        if (type == MagicType.Ice && !isFrozen)
         {
             isFrozen = true;
             Frozen().Forget();
-            SoundManager.Instance.PlaySE(SEType.Frozen);
+            SoundManager.Instance.PlaySE(SEType.SE24);
         }
         else if(type == MagicType.Fire && isFrozen)
         {
             isFrozen = false;
             Melt().Forget();
+            SoundManager.Instance.PlaySE(SEType.SE32);
         }
         //pondは凍ることはあるが別のオブジェクトに変更されることはないのでfalse
         return false;
