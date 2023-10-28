@@ -20,6 +20,7 @@
 |  UniTask  |  2.3.2  |
 |  UnityEasyNet  |  0.0.2  |
 |  MessagePack-CSharp  |  2.5.124  |
+|  UnmaskForUGUI  |  1.4.1  |
 
 
 |  AssetName  |  Version  |

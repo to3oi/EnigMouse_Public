@@ -27,7 +27,7 @@ public class SceneManager : SingletonMonoBehaviour<SceneManager>
     public async void SceneChange(SceneList list,bool isFade,bool isAlpha,bool isWhite = true)
     {
         FadeImageColor(isWhite);
-        SoundManager.Instance.AllStopSE();
+        SoundManager.Instance.AllStopSE().Forget();
         var sceneID = (int)list;
         sceneList = list;
         if (isFade)

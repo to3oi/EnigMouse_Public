@@ -63,9 +63,13 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
     [SerializeField] private float _delayInitMagicCircle = 0.3f;
 
     /// <summary>
-    /// デバッグ用
+    /// マウスの入力取得用
     /// </summary>
     private InputMouse _inputMouse = new InputMouse();
+    /// <summary>
+    /// InputMouseの公開用
+    /// </summary>
+    public InputMouse InputMouse => _inputMouse;
 
     private InputReceiveData _inputReceiveData = new InputReceiveData();
 

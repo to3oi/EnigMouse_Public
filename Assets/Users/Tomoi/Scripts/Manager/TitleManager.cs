@@ -144,7 +144,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         await UniTask.Delay(TimeSpan.FromSeconds(3));
 
         //TODO:シーン移動
-        SoundManager.Instance.StopBGM(BgmHash);
+        SoundManager.Instance.StopBGM(BgmHash).Forget();
         SceneManager.Instance.SceneChange(SceneList.MainGame, true, true,false);
     }
 

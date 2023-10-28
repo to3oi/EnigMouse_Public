@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -165,7 +166,8 @@ public class StageObjectFlame : BaseStageObject
     {
         if (_baseFireEffect._effect.isPlaying)
         {
-            _baseFireEffect._effect.Stop();
+            _baseFireEffect.transform.parent = null;
+            _baseFireEffect.Stop();
             isFire = false;
         }
     }
@@ -191,5 +193,10 @@ public class StageObjectFlame : BaseStageObject
     public override bool isMovedDeath()
     {
         return isFire;
+    }
+
+    private void OnDestroy()
+    {
+        StopFireEffect();
     }
 }

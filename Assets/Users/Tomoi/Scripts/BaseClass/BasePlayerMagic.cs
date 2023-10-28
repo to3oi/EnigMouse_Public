@@ -123,7 +123,7 @@ public class BasePlayerMagic : MonoBehaviour
             //キャンセル処理
             if (token.IsCancellationRequested)
             {
-                SoundManager.Instance.StopSE(PlaySEOnHoverHash);
+                SoundManager.Instance.StopSE(PlaySEOnHoverHash).Forget();
                 _initCircle.OnParticleSystemStopped();
 
                 foreach (var particle in _initCharge.GetComponentsInChildren<ParticleSystem>())
@@ -146,7 +146,7 @@ public class BasePlayerMagic : MonoBehaviour
             await UniTask.Yield();
         }
 
-        SoundManager.Instance.StopSE(PlaySEOnHoverHash);
+        SoundManager.Instance.StopSE(PlaySEOnHoverHash).Forget();
         var PlaySEOnFixedDurationHash = PlaySEOnFixedDuration();
 
         //Init終了
@@ -156,7 +156,7 @@ public class BasePlayerMagic : MonoBehaviour
         {
             if (token.IsCancellationRequested)
             {
-                SoundManager.Instance.StopSE(PlaySEOnFixedDurationHash);
+                SoundManager.Instance.StopSE(PlaySEOnFixedDurationHash).Forget();
                 _defaultCircle.OnParticleSystemStopped();
                 ParticleRelease().Forget();
             }
@@ -170,7 +170,7 @@ public class BasePlayerMagic : MonoBehaviour
         var Ignite =
             EffectManager.Instance.PlayEffect(eff_igniteParticle, Vector3.zero, Quaternion.identity, particlePosition);
 
-        SoundManager.Instance.StopSE(PlaySEOnFixedDurationHash,1);
+        SoundManager.Instance.StopSE(PlaySEOnFixedDurationHash,1).Forget();
         PlaySEOnRegenComplete();
 
 

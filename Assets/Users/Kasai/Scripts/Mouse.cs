@@ -2,6 +2,7 @@ using DG.Tweening;
 using System.Collections;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using System;
 
 public class Mouse : SingletonMonoBehaviour<Mouse>
 {
@@ -320,6 +321,13 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
         }
         transform.rotation = Quaternion.Euler(0,rotate, 0);
 
+    }
+    public async UniTask MouseStartAnim()
+    {
+        anim.SetTrigger("Start");
+        SoundManager.Instance.PlaySE(SEType.SE17);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+        anim.SetTrigger("Idle");
     }
     /// <summary>
     /// マウスが移動した先での処理を決定する

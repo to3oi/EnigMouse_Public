@@ -8,6 +8,13 @@ using UnityEngine;
 public class InputMouse : IInputDataHandler
 {
     private MagicType _magicType = MagicType.Fire;
+    /// <summary>
+    /// MagicTypeの公開用
+    /// </summary>
+    public MagicType MagicType => _magicType;
+
+    public Action<MagicType> DebugAction;
+
     private InputData[] _inputArray = new InputData[] { new InputData() };
     private bool isMagic = false;
 
@@ -37,5 +44,6 @@ public class InputMouse : IInputDataHandler
         {
             _magicType = MagicType.Fire;
         }
+        DebugAction?.Invoke(_magicType);
     }
 }

@@ -55,7 +55,9 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     {
         get { return _frameOutline; }
     }
+
     [SerializeField] private BaseFrameOutline _frameOutline;
+
     protected override void Awake()
     {
         base.Awake();
@@ -69,9 +71,17 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     /// StageMapsに設定されているマップのインデックスをランダムで返す
     /// </summary>
     /// <returns></returns>
-    int StageRandomSelect()
+    int StageSelect()
     {
-        return Random.Range(0, StageMaps.Instance.StageMapList.Count);
+        
+        if (ValueRetention.Instance.StageIndex > StageMaps.Instance.StageMapList.Count - 1)
+        {
+            ValueRetention.Instance.StageIndex = 0;
+        }
+        var stageselect = ValueRetention.Instance.StageIndex;
+        ValueRetention.Instance.StageIndex++;
+        Debug.Log(ValueRetention.Instance.StageIndex);
+        return stageselect;
     }
 
     /// <summary>
@@ -143,26 +153,32 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
                 DynamicStageObjectList[y][x] = dynamicStageObject;
             }
         }
+
         //InitAnimation
-        List<UniTask> task = new List<UniTask>();
+        List<UniTask> initStageAnimationTask = new List<UniTask>();
         foreach (var listY in DynamicStageObjectList)
         {
             foreach (var dynamicStageObject in listY)
             {
-                task.Add(dynamicStageObject.InitStageAnimation());
+                initStageAnimationTask.Add(dynamicStageObject.InitStageAnimation());
             }
         }
 
         //すべてのオブジェクトが落ちるのを待つ
-        await UniTask.WhenAll(task);
+        await UniTask.WhenAll(initStageAnimationTask);
 
+        List<UniTask> initAnimationTask = new List<UniTask>();
         foreach (var listY in DynamicStageObjectList)
         {
             foreach (var dynamicStageObject in listY)
             {
-                dynamicStageObject.InitAnimation().Forget();
+                initAnimationTask.Add(dynamicStageObject.InitAnimation());
             }
         }
+        
+        //すべての初期アニメーションが完了するまで待つ
+        await UniTask.WhenAll(initAnimationTask);
+
     }
 
 
@@ -184,7 +200,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
 
         await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
         await CreateStage();
-    } 
+    }
 
     /// <summary>
     /// 盤面の座標x,yからUnityのワールド空間上の座標に変換する
@@ -196,6 +212,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     {
         return new Vector3(x * offset, 0, Mathf.Abs(y - 6) * offset);
     }
+
     /// <summary>
     /// 盤面の座標x,yからUnityのワールド空間上の座標に変換する
     /// </summary>
@@ -234,7 +251,7 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     /// </summary>
     private void loadStageMap()
     {
-        var mapIndex = StageRandomSelect();
+        var mapIndex = StageSelect();
         defoultMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y).DeepCopy();
         currentMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y).DeepCopy();
     }

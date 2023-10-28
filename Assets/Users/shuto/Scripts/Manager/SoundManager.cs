@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 
@@ -91,7 +92,7 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
     /// </summary>
     /// <param name="soundHash"></param>
     /// <param name="fadeTime">SE消滅する時間</param>
-    public void StopSE(SoundHash soundHash,float fadeTime = 0.25f)
+    public async UniTask StopSE(SoundHash soundHash,float fadeTime = 0.25f)
     {
         AudioSourceInfo asInfo = null;
         for (int i = 0; i < pyaingSEAudioSources.Count; i++)
@@ -99,7 +100,7 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
             if (pyaingSEAudioSources[i].SoundHash == soundHash && pyaingSEAudioSources[i].AudioSource.isPlaying)
             {
                 asInfo = pyaingSEAudioSources[i];
-                DOVirtual.Float(asInfo.AudioSource.volume, 0, fadeTime, v =>
+                await DOVirtual.Float(asInfo.AudioSource.volume, 0, fadeTime, v =>
                 {
                     asInfo.AudioSource.volume = v;
                     if (v == 0)
@@ -110,13 +111,13 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
                             pyaingSEAudioSources.Remove(asInfo);
                         }
                     }
-                });
+                }).ToUniTask();
             }
         }
     }
 
 
-    public void StopBGM(SoundHash soundHash)
+    public async UniTask StopBGM(SoundHash soundHash,float fadeTime = 0.25f)
     {
         
         AudioSourceInfo asInfo = null;
@@ -125,7 +126,7 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
             if (pyaingBGMAudioSources[i].SoundHash == soundHash && pyaingBGMAudioSources[i].AudioSource.isPlaying)
             {
                 asInfo = pyaingBGMAudioSources[i];
-                DOVirtual.Float(asInfo.AudioSource.volume, 0, 0.25f, v =>
+                await  DOVirtual.Float(asInfo.AudioSource.volume, 0, fadeTime, v =>
                 {
                     asInfo.AudioSource.volume = v;
                     if (v == 0)
@@ -136,7 +137,7 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
                             pyaingBGMAudioSources.Remove(asInfo);
                         }
                     }
-                });
+                }).ToUniTask();
             }
         }
     }
@@ -176,10 +177,12 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
         return audioSource;
     }
 
-    public void AllStopSE()
+    public async UniTask AllStopSE()
     {
+        List<UniTask> task = new List<UniTask>();
         foreach (var asInfo in pyaingSEAudioSources)
-        {
+        { 
+            task.Add(
             DOVirtual.Float(asInfo.AudioSource.volume, 0, 0.25f, v =>
             {
                 asInfo.AudioSource.volume = v;
@@ -191,7 +194,9 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
                         pyaingSEAudioSources.Remove(asInfo);
                     }
                 }
-            });
+            }).ToUniTask());
         }
+
+        await UniTask.WhenAll(task);
     }
 }

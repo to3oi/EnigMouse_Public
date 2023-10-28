@@ -188,7 +188,7 @@ public class InputCorrection : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             //////////////////////////////////////////////////////////////////////////////
-            TextArea.text = $"{i + 2} 魔法陣の中心へ魔導具を一つおいて「次へ」を押してください";
+            TextArea.text = $"{i + 2} 魔法の中心に魔導具を一つ置いて「次へ」を押してください";
             var pos = targetPositionTransforms[i].position + Vector3.up * 0.01f;
             var eff = EffectManager.Instance.PlayEffect(EffectType.Fire_UI, pos, quaternion.identity);
             await UniTask.WaitUntil(NextButtonClicked, cancellationToken: token);

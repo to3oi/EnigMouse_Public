@@ -2,14 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
+using TMPro;
 using UnityEngine;
+using UniRx;
 
 public partial class GameManager
 {
     #region ゲームの設定
 
     /// <summary>
-    /// ゲームの正ゲイン時間
+    /// ゲームの制限時間
     /// </summary>
     [SerializeField] private float _timeLimit = 300.0f;
 
@@ -96,30 +99,55 @@ public partial class GameManager
         return countDownProgressCt;
     }
 
+    #region マスク処理用
+
+    [SerializeField] private CanvasGroup mouseMaskCanvasGroup;
+    [SerializeField] private RectTransform unmask;
+
+    #endregion
+
+    #region テキスト表示用
+
+    [SerializeField] private CanvasGroup messageCanvasBackGround;
+    [SerializeField] private CanvasGroup textRootCanvasGroup;
+    [SerializeField] private TextMeshProUGUI[] messageAreas;
+
+    #endregion
+
 
     #region 魔法の発動制限用の変数
-    
+
     /// <summary>
     /// 魔法が発動済みならtrue
     /// </summary>
     private bool[] checkMagicType;
 
     #endregion
-    
+
 
     #region ゲームの進行
 
     private SoundHash BGMHash;
+
+    private Subject<float> _timeSubject = new Subject<float>();
+    public IObservable<float> TimeObservable => _timeSubject;
+
+    private float initTimeSpan = 1;
+
     private async void Start()
     {
-        AddInputEvent();
-        
         //プレイヤーの魔法陣の発動をステージ生成完了まで止める
         isMagicActivation = true;
-        //初期化
+
+        #region 変数などの初期化
+
+        AddInputEvent();
+
         _camera = Camera.main;
-        ResetCheckMagicType();
-        
+        mouseMaskCanvasGroup.alpha = 0;
+        messageCanvasBackGround.alpha = 0;
+        textRootCanvasGroup.alpha = 0;
+
         //魔法陣を生成するオブジェクトを作成
         _firePlayerMagic = Instantiate(_firePlayerMagic);
         _waterPlayerMagic = Instantiate(_waterPlayerMagic);
@@ -128,11 +156,98 @@ public partial class GameManager
         _gameTimer = gameObject.AddComponent<GameTimer>();
         _gameTimer.SetTime(_timeLimit);
 
+        #endregion
+
+        #region 盤面の初期アニメーションを再生
+
         //ステージの生成完了を待機
         await StageManager.Instance.CreateStage();
+
+        //BGM開始
+        BGMHash = SoundManager.Instance.PlayBGM(BGMType.BGM5);
+
+        //ネズミの周りを暗くしてネズミにアクションを取らせる
+        await Mouse.Instance.MouseStartAnim();
+        await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
+        
+        //await UniTask.Delay(TimeSpan.FromSeconds(5));
+
+        //ネズミのマスクを解除
+        await UpdateCanvasGroupAlpha(1, 0, 2, mouseMaskCanvasGroup);
+
+        //ネズミのマスク用のオブジェクトを削除
+        Destroy(mouseMaskCanvasGroup.gameObject);
+
+        await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
+        
+        //TODO:制限時間のゲージを満たす
+        //TODO:ゲージ以外を暗くしてテキスト表示
+        //制限時間は5分
+        //messageCanvasGroupを表示する
+        await UpdateCanvasGroupAlpha(0, 1, 2, messageCanvasBackGround);
+        
+        List<UniTask> task = new List<UniTask>();
+        task.Add( DOVirtual.Float(0, _timeLimit, 4, x => { _timeSubject.OnNext(x); }).ToUniTask());
+        task.Add( MessageUpdate(3, "制限時間は5分"));
+        await UniTask.WhenAll(task);
+
+        await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
+
+        //背景を拡大
+        var mcbgRectTransform = messageCanvasBackGround.transform.GetComponent<RectTransform>();
+        await mcbgRectTransform.DOScale(2, 1);
+
+        //全体を暗くしてテキスト表示
+        //魔法を使いこなし
+        //3s
+        await MessageUpdate(3, "魔法を使いこなし");
+
+        await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
+
+        //続き テキスト表示
+        //ネズミに鍵を取らせ、魔法陣へ誘導しろ
+        //5s
+        await MessageUpdate(5, "ネズミに鍵を取らせ\n魔法陣へ誘導しろ");
+
+        await UpdateCanvasGroupAlpha(1, 0, 2, messageCanvasBackGround);
+
+        //BGM停止
+        await SoundManager.Instance.StopBGM(BGMHash,0.5f);
+        
+        await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
+        
+        //カウントダウン
+        //3,2,1,Start
+        //フォントサイズを変更
+        foreach (var textMeshProUGUI in messageAreas)
+        {
+            textMeshProUGUI.fontSize = 100;
+        }
+
+
+        SoundManager.Instance.PlaySE(SEType.CountDown);
+        await MessageUpdate(0.5f, "3",0.25f);
+        SoundManager.Instance.PlaySE(SEType.CountDown);
+        await MessageUpdate(0.5f, "2",0.25f);
+        SoundManager.Instance.PlaySE(SEType.CountDown);
+        await MessageUpdate(0.5f, "1",0.25f);
+        SoundManager.Instance.PlaySE(SEType.TimeOver);
+        await MessageUpdate(1.5f, "Start",0.25f);
+
+        //最後にメッセージキャンバスを削除
+        Destroy(messageCanvasBackGround.transform.parent.gameObject);
+
+        #endregion
+
         //プレイヤーの魔法陣の生成を開始
         isMagicActivation = false;
 
+        //時間が更新されたら通知
+        _gameTimer.ObserveEveryValueChanged(x => x.TimeLimit).Subscribe(x =>
+        {
+            _timeSubject.OnNext(x);
+        }).AddTo(this);
+        
         //キャンセラレーショントークンを発行
         //ゲームの進行を開始
         BGMHash = SoundManager.Instance.PlayBGM(BGMType.BGM2);
@@ -144,6 +259,7 @@ public partial class GameManager
     /// </summary>
     private async UniTask GameProgressStart(CancellationToken token)
     {
+        ResetCheckMagicType();
         _gameTimer.TimerStart();
         LimitReset();
         Turn = 0;
@@ -163,19 +279,12 @@ public partial class GameManager
             isTurnComplete = false;
 
 
-            try
-            {
-                //魔法発動を待機
-                //この段階でキャンセル処理が入っていたらゲームの進行を停止する
-                await UniTask.WaitUntil(() => isMagicActivation);
-            }
-            catch (OperationCanceledException e)
-            {
-                //ゲームを停止させた時の処理
-                throw;
-            }
+            //魔法発動を待機
+            //この段階でキャンセル処理が入っていたらゲームの進行を停止する
+            await UniTask.WaitUntil(() => isMagicActivation, cancellationToken: token);
 
-            //TODO:魔法使用後にネズミが動くまでの秒数を調整
+
+            //魔法使用後にネズミが動くまでの秒数を調整
             await UniTask.Delay(TimeSpan.FromSeconds(2));
             Mouse.Instance.MouseAct();
 
@@ -222,7 +331,7 @@ public partial class GameManager
 
     public async UniTask CountDown()
     {
-        await _gameOver.StartCountDown(countDownProgressCt);
+        await _gameOver.StartCountDown(CountDownProgressCancel());
     }
 
     /// <summary>
@@ -232,11 +341,10 @@ public partial class GameManager
     {
         var token = GameProgressCancel();
         InitEffectUI();
-      
-        //TODO:盤面の再生成とゲーム進行の開始
+
+        //盤面の再生成とゲーム進行の開始
         await StageManager.Instance.RegenerationStage();
-        ResetCheckMagicType();
-        //ねずみのリセット処理はStageObjectMouseのInitAnimation内で実行されます
+        //ネズミのリセット処理はStageObjectMouseのInitAnimation内で実行されます
 
         //生成が終わったらスタート
         GameProgressStart(token).Forget();
@@ -247,7 +355,7 @@ public partial class GameManager
     /// </summary>
     public async UniTask TimeOver()
     {
-        SoundManager.Instance.StopBGM(BGMHash);
+        SoundManager.Instance.StopBGM(BGMHash).Forget();
         GameProgressCancel();
         CountDownProgressCancel();
         _gameTimer.TimerStop();
@@ -267,10 +375,11 @@ public partial class GameManager
     /// <summary>
     /// ゲームクリアの処理
     /// </summary>
+    [ContextMenu("GameClear")]
     public async UniTask GameClear()
     {
         isGameClear = true;
-        SoundManager.Instance.StopBGM(BGMHash);
+        SoundManager.Instance.StopBGM(BGMHash).Forget();
         GameProgressCancel();
         CountDownProgressCancel();
         _gameTimer.TimerStop();
@@ -281,11 +390,39 @@ public partial class GameManager
         SceneManager.Instance.SceneChange(SceneList.GameClear, true, true);
     }
 
+    /// <summary>
+    /// ネズミの座標でマスク処理をする
+    /// </summary>
+    /// <param name="stageObjectMousePosition"></param>
+    public void SetMouseMask(Vector3 stageObjectMousePosition)
+    {
+        unmask.position = _camera.WorldToScreenPoint(stageObjectMousePosition);
+        UpdateCanvasGroupAlpha(0, 1, 2, mouseMaskCanvasGroup).Forget();
+    }
+
+
+    private async UniTask MessageUpdate(float displayTime, string text,float fadeTime = 0.5f)
+    {
+        foreach (var textMeshProUGUI in messageAreas)
+        {
+            textMeshProUGUI.text = text;
+        }
+
+        await UpdateCanvasGroupAlpha(0, 1, fadeTime, textRootCanvasGroup);
+        await UniTask.Delay(TimeSpan.FromSeconds(displayTime));
+        await UpdateCanvasGroupAlpha(1, 0, fadeTime, textRootCanvasGroup);
+    }
+
+    private async UniTask UpdateCanvasGroupAlpha(float from, float to, float duration, CanvasGroup canvasGroup)
+    {
+        await DOVirtual.Float(from, to, duration, f => { canvasGroup.alpha = f; });
+    }
+
     private void ResetCheckMagicType()
     {
         checkMagicType = new[] { false, false, false, false, false };
     }
-    
+
     /// <summary>
     /// Outlineを非同期で表示
     /// </summary>
@@ -313,8 +450,15 @@ public partial class GameManager
     /// <param name="magicType">魔法の種類</param>
     private void Magic_StartCoordinatePause(Vector2 pos, MagicType magicType)
     {
-        if (isMagicActivation) { return; }
-        if (checkMagicType[(int)magicType]) { return; }
+        if (isMagicActivation)
+        {
+            return;
+        }
+
+        if (checkMagicType[(int)magicType])
+        {
+            return;
+        }
 
         var res = GetMagicPoint(pos);
         if (res.isHitArea)
@@ -330,11 +474,18 @@ public partial class GameManager
     /// <param name="magicType">魔法の種類</param>
     private void Magic_CoordinatePaused(Vector2 pos, MagicType magicType)
     {
-        if (isMagicActivation) { return; }
-        if (checkMagicType[(int)magicType]) { return; }
+        if (isMagicActivation)
+        {
+            return;
+        }
+
+        if (checkMagicType[(int)magicType])
+        {
+            return;
+        }
 
         var res = GetMagicPoint(pos);
-        if (res.isHitArea)　
+        if (res.isHitArea)
         {
             GetPlayerMagic(magicType).Move(res.position);
         }
@@ -342,11 +493,19 @@ public partial class GameManager
 
     private void Magic_PauseCompleted_Start(Vector2 pos, Vector2 vector, MagicType magicType)
     {
-        if (isMagicActivation) { return; }
-        if (checkMagicType[(int)magicType]) { return; }
-        
-        Magic_PauseCompleted(pos,vector,magicType).Forget();
+        if (isMagicActivation)
+        {
+            return;
+        }
+
+        if (checkMagicType[(int)magicType])
+        {
+            return;
+        }
+
+        Magic_PauseCompleted(pos, vector, magicType).Forget();
     }
+
     /// <summary>
     /// 魔法の停止完了
     /// </summary>
@@ -372,7 +531,6 @@ public partial class GameManager
             UpdateEffectUI();
             checkMagicType[(int)magicType] = true;
 
-            //TODO:すべての処理でこの時間待機することになるので要検討
             await UniTask.Delay(TimeSpan.FromSeconds(3));
             isChangedStageObject = true;
         }
@@ -562,19 +720,26 @@ public partial class GameManager
     {
         if (magicUsageCount <= magicUsageCountList[0] && EffectUI_Fire == null)
         {
-            EffectUI_Fire = EffectManager.Instance.PlayEffect(EffectType.Fire_UI, effectUIPosition[0].position, Quaternion.identity);
+            EffectUI_Fire = EffectManager.Instance.PlayEffect(EffectType.Fire_UI, effectUIPosition[0].position,
+                Quaternion.identity);
         }
+
         if (magicUsageCount <= magicUsageCountList[1] && EffectUI_Ice == null)
         {
-            EffectUI_Ice = EffectManager.Instance.PlayEffect(EffectType.Ice_UI, effectUIPosition[1].position, Quaternion.identity);
+            EffectUI_Ice =
+                EffectManager.Instance.PlayEffect(EffectType.Ice_UI, effectUIPosition[1].position, Quaternion.identity);
         }
+
         if (magicUsageCount <= magicUsageCountList[2] && EffectUI_Water == null)
         {
-            EffectUI_Water = EffectManager.Instance.PlayEffect(EffectType.Water_UI, effectUIPosition[2].position, Quaternion.identity);
+            EffectUI_Water = EffectManager.Instance.PlayEffect(EffectType.Water_UI, effectUIPosition[2].position,
+                Quaternion.identity);
         }
+
         if (magicUsageCount <= magicUsageCountList[3] && EffectUI_Wind == null)
         {
-            EffectUI_Wind = EffectManager.Instance.PlayEffect(EffectType.Wind_UI, effectUIPosition[3].position, Quaternion.identity);
+            EffectUI_Wind = EffectManager.Instance.PlayEffect(EffectType.Wind_UI, effectUIPosition[3].position,
+                Quaternion.identity);
         }
     }
 
@@ -597,8 +762,8 @@ public partial class GameManager
         InputManager.Instance.Magic_CoordinatePaused -= Magic_CoordinatePaused;
         InputManager.Instance.Magic_PauseCompleted -= Magic_PauseCompleted_Start;
     }
-    
-    
+
+
     void OnDestroy()
     {
         //GameObject破棄時にキャンセル実行
@@ -606,5 +771,6 @@ public partial class GameManager
 
         RemoveInputEvent();
     }
+
     #endregion
 }

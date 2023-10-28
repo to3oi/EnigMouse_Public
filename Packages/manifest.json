@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coffee.unmask": "https://github.com/mob-sakai/UnmaskForUGUI.git",
     "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.neuecc.unirx": "https://github.com/neuecc/UniRx.git?path=Assets/Plugins/UniRx/Scripts",
     "com.to3oi.unityeasynet": "https://github.com/to3oi/UnityEasyNet.git?path=Assets/Plugins/UnityEasyNet/Scripts",

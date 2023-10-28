@@ -42,6 +42,7 @@ public class StageObjectMonster : BaseStageObject
     {
         _monsterAnimator = _monsterRoot.GetComponent<Animator>();
         _offsetObject = _monsterRoot.transform.parent;
+        _offsetObject.transform.localEulerAngles = new Vector3(0, Random.Range(0,360), 0);
         MonsterAnimationCancel();
         ChangeAnimationLoop(MonsterAnimationCancel()).Forget();
     }
@@ -55,6 +56,7 @@ public class StageObjectMonster : BaseStageObject
             //ランダムな時間待機
             token.ThrowIfCancellationRequested();
             await UniTask.Delay(TimeSpan.FromSeconds(Random.Range(15, 35)),cancellationToken:token);
+            await _offsetObject.DORotate(new Vector3(0, Random.Range(0, 360), 0), 1);
             _monsterAnimator.SetTrigger(IsIdleMotionChange);
 
             //50%で連続再生
@@ -63,7 +65,9 @@ public class StageObjectMonster : BaseStageObject
             await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: token);
             if (Random.Range(0, 2) == 0)
             {
+                await _offsetObject.DORotate(new Vector3(0, Random.Range(0, 360), 0), 1);
                 _monsterAnimator.SetTrigger(IsIdleMotionChange);
+                
             }
         }
     }
@@ -127,7 +131,6 @@ public class StageObjectMonster : BaseStageObject
         //回転の終了を待つ
         await _offsetObject.DORotateQuaternion(q, 0.1f).AsyncWaitForCompletion();
         _monsterAnimator.SetTrigger(IsAttack);
-        var delaytime = 0f;
         //攻撃モーションごとに遅延の時間を変えたい
         await UniTask.Delay(TimeSpan.FromSeconds(1));
         SoundManager.Instance.PlaySE(SEType.SE18);
@@ -156,6 +159,7 @@ public class StageObjectMonster : BaseStageObject
         _monsterAnimator.ResetTrigger(IsAttack);
         _monsterAnimator.ResetTrigger(IsJump);
         _monsterAnimator.ResetTrigger(Die);
+        _offsetObject.transform.localEulerAngles = new Vector3(0, Random.Range(0, 360), 0);
     }
 
     public override bool isValidMove()

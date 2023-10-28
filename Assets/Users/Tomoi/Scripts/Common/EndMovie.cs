@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Video;
 [RequireComponent(typeof(VideoPlayer))]
@@ -23,7 +24,7 @@ public class EndMovie : MonoBehaviour
     private void FinishPlayingVideo(VideoPlayer vp)
     {
         //TODO:タイミング調整
-        SoundManager.Instance.StopBGM(BGMHash);
+        SoundManager.Instance.StopBGM(BGMHash).Forget();
         SceneManager.Instance.SceneChange(SceneList.Title,true,true);
     }
 }

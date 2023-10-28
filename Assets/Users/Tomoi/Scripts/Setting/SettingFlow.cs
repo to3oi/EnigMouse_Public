@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using UnityEngine.UIElements;
@@ -7,8 +8,10 @@ using Button = UnityEngine.UIElements.Button;
 public class SettingFlow : MonoBehaviour
 {
     [SerializeField] private GameObject pf_SettingFlow;
+    [SerializeField] private GameObject PC_DebugUI;
     [SerializeField] private GameObject DisplayMask;
     [SerializeField] private GameObject InputCorrection;
+    
     private UIDocument _uiDocument;
     private GameObject settingFlow;
 
@@ -49,6 +52,7 @@ public class SettingFlow : MonoBehaviour
             InputManager.Instance.SetUseMouse(true);
             InputManager.Instance.SetCorrection(Vector2.zero, Vector2.one);
             SceneManager.Instance.SceneChange(SceneList.Title, true, true);
+            PC_DebugUI.SetActive(true);
             return;
         }
 
@@ -98,6 +102,7 @@ public class SettingFlow : MonoBehaviour
             InputManager.Instance.SetUseMouse(true);
             InputManager.Instance.SetCorrection(Vector2.zero, Vector2.one);
             SceneManager.Instance.SceneChange(SceneList.Title, true, true);
+            PC_DebugUI.SetActive(true);
             return;
         }
         
