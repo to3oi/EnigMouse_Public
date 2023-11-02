@@ -38,3 +38,9 @@
 |  [召喚魔法陣「MQOf SummonCircle Particle set」](https://mqofactory.booth.pm/items/4095231)  |
 |  [MQOf_particle_pack2](https://mqofactory.booth.pm/items/4329197)  |
 |  [【Unityアセット】魔法陣エフェクト](https://booth.pm/ja/items/2544734)  |
+
+
+開発時に使用していたアセットについては含まれていないものもあります\
+完全なデータが必要な場合は別途以下の連絡先までご連絡ください\
+[mail](<mailto:to3oi.works@gmail.com>)\
+[twitter](https://twitter.com/to3oi)
