@@ -42,5 +42,5 @@
 
 開発時に使用していたアセットについては含まれていないものもあります\
 完全なデータが必要な場合は別途以下の連絡先までご連絡ください\
-mail:*to3oi.works*@gmail.com\
-twitter:[https://twitter.com/to3oi](https://twitter.com/to3oi)
+mail : to3oi.works[@]gmail.com\
+twitter : [https://twitter.com/to3oi](https://twitter.com/to3oi)
