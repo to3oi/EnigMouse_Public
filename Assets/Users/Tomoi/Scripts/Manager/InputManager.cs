@@ -242,8 +242,6 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
                 break;
 
             case SceneList.GameClear:
-                break;
-
             case SceneList.GameOver:
                 break;
         }

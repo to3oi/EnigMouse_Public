@@ -52,6 +52,11 @@ public partial class GameManager
     /// ゲームクリアしたときにtrue
     /// </summary>
     private bool isGameClear = false;
+    
+    /// <summary>
+    /// タイムオーバーの演出終了時にtrue
+    /// </summary>
+    private bool isTimeOver = false;
 
     [SerializeField] private GameOver _gameOver;
     private GameTimer _gameTimer;
@@ -353,6 +358,7 @@ public partial class GameManager
     /// <summary>
     /// タイムオーバーの処理
     /// </summary>
+    [ContextMenu("TimeOver")]
     public async UniTask TimeOver()
     {
         SoundManager.Instance.StopBGM(BGMHash).Forget();
@@ -368,6 +374,7 @@ public partial class GameManager
         //ゲームクリアとタイムオーバーが同時に実行されているときはゲームクリアを優先的に実行
         if (!isGameClear)
         {
+            isTimeOver = true;
             SceneManager.Instance.SceneChange(SceneList.GameOver, true, true);
         }
     }
@@ -378,6 +385,8 @@ public partial class GameManager
     [ContextMenu("GameClear")]
     public async UniTask GameClear()
     {
+        if(isTimeOver){return;}
+        
         isGameClear = true;
         SoundManager.Instance.StopBGM(BGMHash).Forget();
         GameProgressCancel();
