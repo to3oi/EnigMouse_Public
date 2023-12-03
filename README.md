@@ -3,6 +3,11 @@
 [![EnigMouseSendMaster](https://github-readme-stats.vercel.app/api/pin/?username=to3oi&repo=EnigMouseSendMaster)](https://github.com/to3oi/EnigMouseSendMaster)
 [![EnigMouseSendClient](https://github-readme-stats.vercel.app/api/pin/?username=to3oi&repo=EnigMouseSendClient)](https://github.com/to3oi/EnigMouseSendClient)
 
+またこのリポジトリには以下に記載しているアセットを含めていません\
+このデータを実行するにはアセットをすべてインポートしてください\
+またアセットを含めた、完全なデータが必要な場合は以下のメールアドレスまでご連絡ください\
+tomoya.ito.0517[]gmail.com
+
 # 開発期間
 2023/4/28 ~
 # 開発環境
@@ -20,7 +25,7 @@
 |  MessagePack-CSharp  |  2.5.124  |
 |  UnmaskForUGUI  |  1.4.1  |
 
-
+# 使用アセット
 |  AssetName  |  Version  |
 | ---- | ---- |
 |  [Mouse - Quirky Series](https://assetstore.unity.com/packages/3d/characters/animals/mammals/mouse-quirky-series-180848)  |  1.4.1  |
