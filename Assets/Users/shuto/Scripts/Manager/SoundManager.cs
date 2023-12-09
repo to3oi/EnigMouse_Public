@@ -199,4 +199,27 @@ public class SoundManager : SingletonMonoBehaviour4Manager<SoundManager>
 
         await UniTask.WhenAll(task);
     }
+    
+    public async UniTask AllStopBGM()
+    {
+        List<UniTask> task = new List<UniTask>();
+        foreach (var asInfo in pyaingBGMAudioSources)
+        { 
+            task.Add(
+                DOVirtual.Float(asInfo.AudioSource.volume, 0, 0.25f, v =>
+                {
+                    asInfo.AudioSource.volume = v;
+                    if (v == 0)
+                    {
+                        asInfo.AudioSource.Stop();
+                        if (asInfo != null)
+                        {
+                            pyaingBGMAudioSources.Remove(asInfo);
+                        }
+                    }
+                }).ToUniTask());
+        }
+
+        await UniTask.WhenAll(task);
+    }
 }

@@ -32,6 +32,11 @@ public enum SEType
     SE30     = 29,
     SE31     = 30,
     SE32     = 31,
+    SE33     = 32,
+    SE34     = 33,
+    SE35     = 34,
+    SE36     = 35,
+    SE37     = 36,
     
     #region old
     GameStart = 0,

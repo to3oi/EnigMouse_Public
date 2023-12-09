@@ -65,5 +65,6 @@ public enum EffectType
     Wind_UI = 803,
     
     //その他特殊系は900スタート
-    Die = 900                           //死亡時
+    Die = 900,                           //死亡時
+    EXExitMouseEffect = 901                //ネズミのEX演出退出用
 }

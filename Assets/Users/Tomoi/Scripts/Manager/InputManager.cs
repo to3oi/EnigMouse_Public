@@ -238,6 +238,7 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
             case SceneList.Setting:
             case SceneList.Title:
             case SceneList.MainGame:
+            case SceneList.StageSelect:
                 InputNotify(inputDataHandler);
                 break;
 
@@ -264,6 +265,10 @@ public class InputManager : SingletonMonoBehaviour4Manager<InputManager>
                     break;
                 case SceneList.MainGame:
                     GameManager.Instance.Magic_CancelCoordinatePause(MagicDataDictionary[magicType].LastFramePosition,
+                        magicType);
+                    break;
+                case SceneList.StageSelect:
+                    StageSelectManager.Instance.Magic_CancelCoordinatePause(MagicDataDictionary[magicType].LastFramePosition,
                         magicType);
                     break;
             }

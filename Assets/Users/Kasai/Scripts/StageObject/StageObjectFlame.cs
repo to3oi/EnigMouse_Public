@@ -23,13 +23,13 @@ public class StageObjectFlame : BaseStageObject
 
     public override async UniTask InitAnimation()
     {
-        PlayFireEffect();
+        PlayEffect();
         await base.InitAnimation();
     }
 
     public override async UniTask EndAnimation()
     {
-        StopFireEffect();
+        StopEffect();
         await base.EndAnimation();
     }
 
@@ -38,7 +38,7 @@ public class StageObjectFlame : BaseStageObject
         if (MagicType.Wind == type && isFire) //風の魔法を受けた時の処理
         {
 
-            StopFireEffect();
+            StopEffect();
 
             SoundManager.Instance.PlaySE(SEType.SE27);
         }
@@ -53,7 +53,7 @@ public class StageObjectFlame : BaseStageObject
             //EffectManager.Instance.PlayEffect(EffectType.Magic_Water, _flamePos, Quaternion.identity);
 
             //Fireのエフェクトを停止
-            StopFireEffect();
+            StopEffect();
 
             //TODO:変更処理がありそうだけどわからないから保留
             //stageObjectType = StageObjectType.Flame;
@@ -155,14 +155,14 @@ public class StageObjectFlame : BaseStageObject
     }
 
     private BaseEffect _baseFireEffect;
-    private void PlayFireEffect()
+    public override void PlayEffect()
     {
         _baseFireEffect = EffectManager.Instance.PlayEffect(EffectType.StageObject_Flame, _effectFirePosition,
             Quaternion.identity, _objectRoot);
         isFire = true;
     }
 
-    private void StopFireEffect()
+    public override void StopEffect()
     {
         if (_baseFireEffect._effect.isPlaying)
         {
@@ -197,6 +197,6 @@ public class StageObjectFlame : BaseStageObject
 
     private void OnDestroy()
     {
-        StopFireEffect();
+        StopEffect();
     }
 }

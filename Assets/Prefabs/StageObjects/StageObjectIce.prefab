@@ -140,6 +140,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 5061947874253960252}
     m_Modifications:
+    - target: {fileID: 1047512799706330, guid: cc0fd657b60ef8c499b057056b948f16, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1678884195978160, guid: cc0fd657b60ef8c499b057056b948f16, type: 3}
       propertyPath: m_Name
       value: Crystalsv01

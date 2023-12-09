@@ -134,4 +134,20 @@ public class BaseStageObject : MonoBehaviour
     {
         await UniTask.Yield();
     }
+
+    /// <summary>
+    /// 常に表示されるエフェクトの生成
+    /// </summary>
+    public virtual void PlayEffect()
+    {
+
+    }
+
+    /// <summary>
+    /// 常に表示されるエフェクトの生成
+    /// </summary>
+    public virtual void StopEffect()
+    {
+
+    }
 }

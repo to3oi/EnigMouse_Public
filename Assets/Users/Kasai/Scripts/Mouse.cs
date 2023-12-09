@@ -50,11 +50,7 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
     }
     void Update()
     {
-        //デバッグ用
-        if (Input.GetKeyDown(KeyCode.RightShift) && !isinput)
-        {
-            MouseAct();
-        }
+
     }
     /// <summary>
     /// ネズミの移動
@@ -142,6 +138,11 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
                         break;
                     }
                     else if (stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.Key && !_keyFlag)//初めて鍵のマスに止まった時の処理
+                    {
+                        turncomp = true;
+                        break;
+                    }
+                    else if(stageManager.GetStageObjectType((int)destinationPos.x, (int)destinationPos.z) == StageObjectType.ResetBottle)
                     {
                         turncomp = true;
                         break;
@@ -251,6 +252,18 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
         }
         yield return null;
     }
+    public IEnumerator ResetBottle()
+    {
+        RouteSearch();
+        anim.SetTrigger("KeyGet");
+        yield return new WaitForSeconds(1f);
+        GameManager.Instance.ResetUseMagicLimit();//魔法の使用状況のリセット
+        anim.SetTrigger("Idle");
+        SoundManager.Instance.PlaySE(SEType.KeyGet);
+        yield return new WaitForSeconds(0.5f);
+        MouseMove();
+        yield return null;
+    }
     /// <summary>
     /// ゲームクリアの判定
     /// </summary>
@@ -348,6 +361,7 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
             {
                 case StageObjectType.Key:
                 case StageObjectType.MagicCircle:
+                case StageObjectType.ResetBottle:
                     dynamicStageObject.MoveToCell();
                     break;
                 case StageObjectType.Magma:
@@ -397,6 +411,7 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
                 case StageObjectType.Mouse:
                 case StageObjectType.MagicCircle:
                 case StageObjectType.Key:
+                case StageObjectType.ResetBottle:
                     break;
                 case StageObjectType.Magma:
                 case StageObjectType.Abyss:
@@ -417,5 +432,30 @@ public class Mouse : SingletonMonoBehaviour<Mouse>
         {
             _destinationarea = false;
         }
+    }
+
+    /// <summary>
+    /// EX演出でゴール時のネズミ退出準備
+    /// </summary>
+    public async UniTask InitExtraPerformance()
+    {
+        anim.SetTrigger("Reset");
+        //await UniTask.Delay(TimeSpan.FromSeconds(0.1f));
+        await UniTask.Yield();
+        //パーティクルで光らせる
+        EffectManager.Instance.PlayEffect(EffectType.EXExitMouseEffect,Vector3.zero,Quaternion.identity,transform);
+        anim.SetTrigger("EX");
+        SoundManager.Instance.PlaySE(SEType.SE17);
+        await UniTask.Delay(TimeSpan.FromSeconds(2f));
+        anim.SetTrigger("Reset");
+    }
+
+    /// <summary>
+    /// EX演出でゴール時にネズミが画面外に退出する演出の開始
+    /// </summary>
+    public async UniTask ExitMouse4ExtraPerformance()
+    {
+        SoundManager.Instance.PlaySE(SEType.SE37);
+        await transform.DOMoveY(10, 1.5f);
     }
 }

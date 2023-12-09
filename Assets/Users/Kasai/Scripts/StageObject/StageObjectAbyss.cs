@@ -63,6 +63,11 @@ public class StageObjectAbyss : BaseStageObject
             //風のエフェクトを止める
             _effect?.Stop();
             _isPassable = false;
+            if(Mouse.Instance.MousePosition == new Vector2(transform.position.x,transform.position.z))
+            {
+                Debug.Log("風魔法終了");
+                await Mouse.Instance.Death();
+            }
         }
         await UniTask.Yield();
     }

@@ -90,3 +90,6 @@ MonoBehaviour:
   - MagicType: 803
     Effect: {fileID: 8920877027545891979, guid: 6a102a4751a3bbe4ba1c9891fe54123b,
       type: 3}
+  - MagicType: 901
+    Effect: {fileID: -6897488608408151704, guid: 11cbf6b7b09bfef44b016e5060fc3508,
+      type: 3}

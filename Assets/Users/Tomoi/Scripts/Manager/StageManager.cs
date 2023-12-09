@@ -21,10 +21,30 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     ///                           [4,5]
     ///                     [5,4],[5,5]
     /// </summary>
-    [SerializeField]
-    public Map.Map currentMap { get; private set; }
+    private Map.Map currentMap;
 
-    public Map.Map defoultMap { get; private set; }
+    private Map.Map defoultMap;
+
+    /// <summary>
+    /// ステージの最大ターン数
+    /// </summary>
+    public int StageMaxTurn { get; private set; }
+
+    /// <summary>
+    /// ステージの名前
+    /// </summary>
+    public string StageName { get; private set; }
+
+    /// <summary>
+    /// ステージがハードモードかどうか
+    /// </summary>
+    public bool isHardMode { get; private set; }
+
+    /// <summary>
+    /// タイムオーバーまでの時間(分)
+    /// </summary>
+    public int MinutesForTimeOver { get; private set; }
+
 
     /// <summary>
     /// 取得時はy,x
@@ -68,16 +88,16 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     }
 
     /// <summary>
-    /// StageMapsに設定されているマップのインデックスをランダムで返す
+    /// StageMapsに設定されているマップのインデックスを返す
     /// </summary>
     /// <returns></returns>
     int StageSelect()
     {
-        
         if (ValueRetention.Instance.StageIndex > StageMaps.Instance.StageMapList.Count - 1)
         {
             ValueRetention.Instance.StageIndex = 0;
         }
+
         var stageselect = ValueRetention.Instance.StageIndex;
         ValueRetention.Instance.StageIndex++;
         Debug.Log(ValueRetention.Instance.StageIndex);
@@ -175,10 +195,9 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
                 initAnimationTask.Add(dynamicStageObject.InitAnimation());
             }
         }
-        
+
         //すべての初期アニメーションが完了するまで待つ
         await UniTask.WhenAll(initAnimationTask);
-
     }
 
 
@@ -252,8 +271,12 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
     private void loadStageMap()
     {
         var mapIndex = StageSelect();
-        defoultMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y).DeepCopy();
-        currentMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y).DeepCopy();
+        StageMaxTurn = StageMaps.Instance.StageMapList[mapIndex].StageMaxTurn;
+        StageName = StageMaps.Instance.StageMapList[mapIndex].StageName;
+        isHardMode = StageMaps.Instance.StageMapList[mapIndex].isHardMode;
+        MinutesForTimeOver = StageMaps.Instance.StageMapList[mapIndex].MinutesForTimeOver;
+        defoultMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y);
+        currentMap = new Map.Map(StageMaps.Instance.StageMapList[mapIndex].y);
     }
 
     /// <summary>
@@ -281,5 +304,24 @@ public class StageManager : SingletonMonoBehaviour<StageManager>
         }
 
         return GetDynamicStageObject(x, Mathf.Abs(y - 5)).NowStageObjectType;
+    }
+
+    /// <summary>
+    /// エクストラ演出の開始
+    /// </summary>
+    public async UniTask ExitDynamicStageObject4ExtraPerformance()
+    {
+        List<UniTask> task = new List<UniTask>();
+        var destroyStageObjectList = DynamicStageObjectList;
+
+        foreach (var listY in destroyStageObjectList)
+        {
+            foreach (var dynamicStageObject in listY)
+            {
+                task.Add(dynamicStageObject.ExitStageAnimation());
+            }
+        }
+
+        await UniTask.WhenAll(task);
     }
 }

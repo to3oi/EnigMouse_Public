@@ -13,7 +13,7 @@ public class TimeGauge : MonoBehaviour
     [SerializeField]
     private bool isSetting;
 
-    private void Awake()
+    private void Start()
     {
         if (!isSetting)
         {
@@ -24,19 +24,21 @@ public class TimeGauge : MonoBehaviour
         for (int i = 0; i < gaugeMeshRenderers.Count; i++)
         {
             gaugeMaterials.Add(gaugeMeshRenderers[i].material);
-            gaugeMeshRenderers[i].material.SetFloat("_Ratio", 0);
+            gaugeMeshRenderers[i].material.SetFloat("_Ratio", !ValueRetention.Instance.PlayedExtraPerformance ? 0 : 1);
         }
         
         //ゲージの更新
-        GameManager.Instance.TimeObservable.Subscribe(timeLimit =>
-        {
-            var i = 3 - (int)(timeLimit / gaugeTime);
+        GameManager.Instance.TimeObservable.Subscribe(GaugeUpdate).AddTo(this);
+    }
 
-            if (i >= 0)
-            {
-                gaugeMaterials[i].SetFloat("_Ratio",
-                    (timeLimit % gaugeTime) / gaugeTime);
-            }
-        }).AddTo(this);
+    private void GaugeUpdate(float f)
+    {
+        var i = 3 - (int)(f / gaugeTime);
+
+        if (i >= 0)
+        {
+            gaugeMaterials[i].SetFloat("_Ratio",
+                (f % gaugeTime) / gaugeTime);
+        }
     }
 }

@@ -77,3 +77,13 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: b78251b2cfd104b4a8d8b7dfd2506065, type: 3}
   - SEType: 31
     clip: {fileID: 8300000, guid: 7c69f18cdd4677240a33ca553509c42f, type: 3}
+  - SEType: 32
+    clip: {fileID: 8300000, guid: 87dfadcb687f6af4b9e3f435e19e282f, type: 3}
+  - SEType: 33
+    clip: {fileID: 8300000, guid: ab2be169acc1ce842a0ec272edfcb17d, type: 3}
+  - SEType: 34
+    clip: {fileID: 8300000, guid: d26f23b0e0c176146a0fb4fafe1433d1, type: 3}
+  - SEType: 35
+    clip: {fileID: 8300000, guid: 0d624209a321ee64aa20d1c6abd5236f, type: 3}
+  - SEType: 36
+    clip: {fileID: 8300000, guid: 9456a743f6b9a69488f86e08eb0f7ad6, type: 3}

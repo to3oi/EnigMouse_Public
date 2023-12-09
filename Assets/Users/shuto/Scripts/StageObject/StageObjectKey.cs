@@ -1,4 +1,3 @@
-using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
@@ -16,7 +15,6 @@ public class StageObjectKey : BaseStageObject
     {
         keyRotate = keyGameObject.transform.DOLocalRotate(new Vector3(45, 360, 0), 5f, RotateMode.FastBeyond360).SetLoops(-1, LoopType.Restart).SetEase(Ease.Linear);
     }
-
     public override bool isValidMove()
     {
         //ネズミが移動可能か判定する

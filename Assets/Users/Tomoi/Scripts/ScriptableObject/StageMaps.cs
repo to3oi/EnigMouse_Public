@@ -10,6 +10,8 @@ public class StageMaps : ScriptableObject
         private set { }
     }
 
+    public List<Map.Map> StageMapEditorList => _stageMapList;
+
     /// <summary>
     /// StageMapEditorで参照するList
     /// </summary>
@@ -44,6 +46,11 @@ namespace Map
     [System.Serializable]
     public class Map
     {
+        public int StageMaxTurn = 4;
+        public string StageName;
+        public Texture StageSelectTexture;
+        public bool isHardMode = false;
+        public int MinutesForTimeOver = 5;
         public List<X> y = new List<X>(6);
 
         public Map(List<X> list)

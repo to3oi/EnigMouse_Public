@@ -55,3 +55,6 @@ MonoBehaviour:
   - ObjectType: 190
     GameObject: {fileID: 8614816883185074479, guid: 6ef81f7b6261e604aa8979d269b940ab,
       type: 3}
+  - ObjectType: 113
+    GameObject: {fileID: 5601385479361708026, guid: eb547e9499302b84f8b30c52ad108f61,
+      type: 3}

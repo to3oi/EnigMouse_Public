@@ -14,6 +14,7 @@ public enum StageObjectType
     Key = 110,            //鍵
     MagicCircle = 111,    //魔法陣
     Mouse = 112,          //マウス  
+    ResetBottle = 113,    //リセットボトル
     
     TestAnimation = 190   //テスト用  
 }

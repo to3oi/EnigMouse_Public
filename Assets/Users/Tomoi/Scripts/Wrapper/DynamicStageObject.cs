@@ -10,7 +10,6 @@ using UnityEngine.Rendering;
 /// </summary>
 public class DynamicStageObject : MonoBehaviour
 {
-    private BaseStageObject _defaultBaseStageObject;
     private StageObjectType _defaultStageObjectType;
     private BaseStageObject _nowStageObject;
     private BaseFrameOutline _frameOutline;
@@ -89,6 +88,7 @@ public class DynamicStageObject : MonoBehaviour
 
         //_stageCreateAnimationIndexの秒数待機
         await UniTask.Delay(TimeSpan.FromSeconds((StageCreateAnimationIndex + 3) / _startSpeed));
+        _nowStageObject.StopEffect();
 
         //移動
         //移動距離,移動時間

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using TMPro;
@@ -14,7 +15,7 @@ public partial class GameManager
     /// <summary>
     /// ゲームの制限時間
     /// </summary>
-    [SerializeField] private float _timeLimit = 300.0f;
+    private float _timeLimit => StageManager.Instance.MinutesForTimeOver * 60;
 
     /// <summary>
     /// 最大ターン数
@@ -52,7 +53,7 @@ public partial class GameManager
     /// ゲームクリアしたときにtrue
     /// </summary>
     private bool isGameClear = false;
-    
+
     /// <summary>
     /// タイムオーバーの演出終了時にtrue
     /// </summary>
@@ -115,7 +116,9 @@ public partial class GameManager
 
     [SerializeField] private CanvasGroup messageCanvasBackGround;
     [SerializeField] private CanvasGroup textRootCanvasGroup;
+    [SerializeField] private CanvasGroup stageNameTextRootCanvasGroup;
     [SerializeField] private TextMeshProUGUI[] messageAreas;
+    [SerializeField] private TextMeshProUGUI[] stageNameAreas;
 
     #endregion
 
@@ -139,6 +142,13 @@ public partial class GameManager
 
     private float initTimeSpan = 1;
 
+    /// <summary>
+    /// ハードモード 
+    /// </summary>
+    private bool _isHardMode = false;
+
+    [SerializeField] private GameObject _hardModeBackGround;
+
     private async void Start()
     {
         //プレイヤーの魔法陣の発動をステージ生成完了まで止める
@@ -152,16 +162,33 @@ public partial class GameManager
         mouseMaskCanvasGroup.alpha = 0;
         messageCanvasBackGround.alpha = 0;
         textRootCanvasGroup.alpha = 0;
+        stageNameTextRootCanvasGroup.alpha = 0;
+
+        //最大ターン数を変更
+        MaxTurn = StageManager.Instance.StageMaxTurn;
+
+        //このステージのタイムオーバーまでの時間を初期化
+        _gameTimer = gameObject.AddComponent<GameTimer>();
+        _gameTimer.SetTime(StageManager.Instance.MinutesForTimeOver * 60);
+
+        //ハードモードの設定
+        _isHardMode = StageManager.Instance.isHardMode;
+        _hardModeBackGround.SetActive(_isHardMode);
 
         //魔法陣を生成するオブジェクトを作成
         _firePlayerMagic = Instantiate(_firePlayerMagic);
         _waterPlayerMagic = Instantiate(_waterPlayerMagic);
         _icePlayerMagic = Instantiate(_icePlayerMagic);
         _windPlayerMagic = Instantiate(_windPlayerMagic);
-        _gameTimer = gameObject.AddComponent<GameTimer>();
-        _gameTimer.SetTime(_timeLimit);
 
         #endregion
+
+        if (!ValueRetention.Instance.PlayedExtraPerformance)
+        {
+            SoundManager.Instance.PlaySE(SEType.SE33);
+        }
+
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
 
         #region 盤面の初期アニメーションを再生
 
@@ -174,8 +201,6 @@ public partial class GameManager
         //ネズミの周りを暗くしてネズミにアクションを取らせる
         await Mouse.Instance.MouseStartAnim();
         await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
-        
-        //await UniTask.Delay(TimeSpan.FromSeconds(5));
 
         //ネズミのマスクを解除
         await UpdateCanvasGroupAlpha(1, 0, 2, mouseMaskCanvasGroup);
@@ -184,43 +209,63 @@ public partial class GameManager
         Destroy(mouseMaskCanvasGroup.gameObject);
 
         await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
-        
-        //TODO:制限時間のゲージを満たす
-        //TODO:ゲージ以外を暗くしてテキスト表示
-        //制限時間は5分
+
+        //フォントサイズを変更
+        foreach (var textMeshProUGUI in messageAreas)
+        {
+            textMeshProUGUI.fontSize = 50;
+        }
+
         //messageCanvasGroupを表示する
         await UpdateCanvasGroupAlpha(0, 1, 2, messageCanvasBackGround);
-        
+        await MessageUpdate(messageAreas, textRootCanvasGroup, StageManager.Instance.StageName, 3f);
+
+        //フォントサイズを変更
+        foreach (var textMeshProUGUI in messageAreas)
+        {
+            textMeshProUGUI.fontSize = 25;
+        }
+
+        //制限時間は5分
+
         List<UniTask> task = new List<UniTask>();
-        task.Add( DOVirtual.Float(0, _timeLimit, 4, x => { _timeSubject.OnNext(x); }).ToUniTask());
-        task.Add( MessageUpdate(3, "制限時間は5分"));
+        //EX演出後はゲージが貯まる演出をカット
+        if (!ValueRetention.Instance.PlayedExtraPerformance)
+        {
+            task.Add(DOVirtual.Float(0, _timeLimit, 4, x => { _timeSubject.OnNext(x); }).ToUniTask());
+        }
+
+        task.Add(MessageUpdate(messageAreas, textRootCanvasGroup, $"制限時間は{StageManager.Instance.MinutesForTimeOver}分",
+            3));
         await UniTask.WhenAll(task);
 
         await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
 
-        //背景を拡大
-        var mcbgRectTransform = messageCanvasBackGround.transform.GetComponent<RectTransform>();
-        await mcbgRectTransform.DOScale(2, 1);
+        //TODO:EX演出後のときは一旦非表示にしてみる
+        if (!ValueRetention.Instance.PlayedExtraPerformance)
+        {
+            //背景を拡大
+            var mcbgRectTransform = messageCanvasBackGround.transform.GetComponent<RectTransform>();
+            await mcbgRectTransform.DOScale(2, 1);
 
-        //全体を暗くしてテキスト表示
-        //魔法を使いこなし
-        //3s
-        await MessageUpdate(3, "魔法を使いこなし");
+            //全体を暗くしてテキスト表示
+            //魔法を使いこなし
+            //3s
+            await MessageUpdate(messageAreas, textRootCanvasGroup, "魔法を使いこなし", 3);
 
-        await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
+            await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
 
-        //続き テキスト表示
-        //ネズミに鍵を取らせ、魔法陣へ誘導しろ
-        //5s
-        await MessageUpdate(5, "ネズミに鍵を取らせ\n魔法陣へ誘導しろ");
-
-        await UpdateCanvasGroupAlpha(1, 0, 2, messageCanvasBackGround);
+            //続き テキスト表示
+            //ネズミに鍵を取らせ、魔法陣へ誘導しろ
+            //5s
+            await MessageUpdate(messageAreas, textRootCanvasGroup, "ネズミに鍵を取らせ\n魔法陣へ誘導しろ", 5);
+        }
 
         //BGM停止
-        await SoundManager.Instance.StopBGM(BGMHash,0.5f);
-        
+        await SoundManager.Instance.StopBGM(BGMHash, 0.5f);
+
         await UniTask.Delay(TimeSpan.FromSeconds(initTimeSpan));
-        
+
         //カウントダウン
         //3,2,1,Start
         //フォントサイズを変更
@@ -229,16 +274,22 @@ public partial class GameManager
             textMeshProUGUI.fontSize = 100;
         }
 
-
         SoundManager.Instance.PlaySE(SEType.CountDown);
-        await MessageUpdate(0.5f, "3",0.25f);
+        await MessageUpdate(messageAreas, textRootCanvasGroup, "3", 0.5f, 0.25f);
         SoundManager.Instance.PlaySE(SEType.CountDown);
-        await MessageUpdate(0.5f, "2",0.25f);
+        await MessageUpdate(messageAreas, textRootCanvasGroup, "2", 0.5f, 0.25f);
         SoundManager.Instance.PlaySE(SEType.CountDown);
-        await MessageUpdate(0.5f, "1",0.25f);
+        await MessageUpdate(messageAreas, textRootCanvasGroup, "1", 0.5f, 0.25f);
         SoundManager.Instance.PlaySE(SEType.TimeOver);
-        await MessageUpdate(1.5f, "Start",0.25f);
 
+        task = new List<UniTask>();
+        task.Add(UpdateCanvasGroupAlpha(1, 0, 2, messageCanvasBackGround));
+        task.Add(DOVirtual.Float(stageNameTextRootCanvasGroup.alpha, 0, 0.5f,
+            v => { stageNameTextRootCanvasGroup.alpha = v; }).ToUniTask());
+        task.Add(MessageUpdate(messageAreas, textRootCanvasGroup, "Start", 1.5f, 0.25f));
+        await UniTask.WhenAll(task);
+
+        ValueRetention.Instance.PlayedExtraPerformance = false;
         //最後にメッセージキャンバスを削除
         Destroy(messageCanvasBackGround.transform.parent.gameObject);
 
@@ -248,11 +299,8 @@ public partial class GameManager
         isMagicActivation = false;
 
         //時間が更新されたら通知
-        _gameTimer.ObserveEveryValueChanged(x => x.TimeLimit).Subscribe(x =>
-        {
-            _timeSubject.OnNext(x);
-        }).AddTo(this);
-        
+        _gameTimer.ObserveEveryValueChanged(x => x.TimeLimit).Subscribe(x => { _timeSubject.OnNext(x); }).AddTo(this);
+
         //キャンセラレーショントークンを発行
         //ゲームの進行を開始
         BGMHash = SoundManager.Instance.PlayBGM(BGMType.BGM2);
@@ -298,6 +346,16 @@ public partial class GameManager
 
             //ターン数チェック
             if (MaxTurn <= Turn)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+                Mouse.Instance.HideMouse();
+                GameOver().Forget();
+            }
+            //魔法をすべて使い切っていたら再生成する処理
+            if (magicUsageCount <= magicUsageCountList[0]
+                && magicUsageCount <= magicUsageCountList[1]
+                && magicUsageCount <= magicUsageCountList[2]
+                && magicUsageCount <= magicUsageCountList[3])
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
                 Mouse.Instance.HideMouse();
@@ -385,18 +443,86 @@ public partial class GameManager
     [ContextMenu("GameClear")]
     public async UniTask GameClear()
     {
-        if(isTimeOver){return;}
-        
+        if (isTimeOver)
+        {
+            return;
+        }
+
         isGameClear = true;
         SoundManager.Instance.StopBGM(BGMHash).Forget();
         GameProgressCancel();
         CountDownProgressCancel();
         _gameTimer.TimerStop();
 
-        SoundManager.Instance.PlaySE(SEType.GameClear);
+        //ゲージを2個以上残してゲームをクリアした場合EX演出を実行して追加の盤面を表示
+        //ハードモードの場合は通常クリアに推移
+        if ((StageManager.Instance.MinutesForTimeOver * 60 / 4 * 2) < _gameTimer.TimeLimit && !_isHardMode)
+        {
+            //TODO:EX演出
+            await ExtraPerformance();
+        }
+        else
+        {
+            //通常クリア演出
+            SoundManager.Instance.PlaySE(SEType.GameClear);
+            await gameClear.GameClearStart();
+            SceneManager.Instance.SceneChange(SceneList.GameClear, true, true);
+        }
+    }
 
-        await gameClear.GameClearStart();
-        SceneManager.Instance.SceneChange(SceneList.GameClear, true, true);
+    /// <summary>
+    /// エクストラ演出の開始
+    /// </summary>
+    private async UniTask ExtraPerformance()
+    {
+        //魔法発動済みのUIと止める
+        InitEffectUI();
+
+        //間
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
+
+
+        List<UniTask> task = new List<UniTask>();
+        task.Add(UniTask.Run(async () =>
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(0.75f));
+            //ネズミがキョロキョロ
+            await Mouse.Instance.InitExtraPerformance();
+        }));
+        
+        SoundManager.Instance.PlaySE(SEType.GameClear);
+        task.Add( DOVirtual.Float(_gameTimer.TimeLimit, StageManager.Instance.MinutesForTimeOver * 60, 3.5f,
+            value => { _timeSubject.OnNext(value); }).ToUniTask());
+        await UniTask.WhenAll(task);
+        
+        await UniTask.Delay(TimeSpan.FromSeconds(1f));
+
+        //ネズミが画面外に移動する
+        await Mouse.Instance.ExitMouse4ExtraPerformance();
+
+        //盤面を落下させる
+        await StageManager.Instance.ExitDynamicStageObject4ExtraPerformance();
+
+        await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+
+        //背景を横から挿入
+        _hardModeBackGround.SetActive(true);
+        var t = _hardModeBackGround.transform;
+        var p = t.position;
+        t.position = new Vector3(p.x + 70f, p.y, p.z);
+
+        SoundManager.Instance.PlaySE(SEType.SE36);
+        await t.DOMoveX(p.x, 2f);
+
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
+
+        //盤面をExtraStageにして再ロード
+        //設定
+        ValueRetention.Instance.StageIndex = 4;
+        ValueRetention.Instance.PlayedExtraPerformance = true;
+
+        //シーン移動
+        SceneManager.Instance.SceneChange(SceneList.MainGame, false, false, isWhite: false, fadeTime: 0);
     }
 
     /// <summary>
@@ -409,17 +535,21 @@ public partial class GameManager
         UpdateCanvasGroupAlpha(0, 1, 2, mouseMaskCanvasGroup).Forget();
     }
 
-
-    private async UniTask MessageUpdate(float displayTime, string text,float fadeTime = 0.5f)
+    private async UniTask MessageUpdate(TextMeshProUGUI[] textMeshArrays, CanvasGroup canvasGroup, string text,
+        float displayTime,
+        float fadeTime = 0.5f, bool fadeOut = true)
     {
-        foreach (var textMeshProUGUI in messageAreas)
+        foreach (var textMeshProUGUI in textMeshArrays)
         {
             textMeshProUGUI.text = text;
         }
 
-        await UpdateCanvasGroupAlpha(0, 1, fadeTime, textRootCanvasGroup);
+        await UpdateCanvasGroupAlpha(0, 1, fadeTime, canvasGroup);
         await UniTask.Delay(TimeSpan.FromSeconds(displayTime));
-        await UpdateCanvasGroupAlpha(1, 0, fadeTime, textRootCanvasGroup);
+        if (fadeOut)
+        {
+            await UpdateCanvasGroupAlpha(1, 0, fadeTime, canvasGroup);
+        }
     }
 
     private async UniTask UpdateCanvasGroupAlpha(float from, float to, float duration, CanvasGroup canvasGroup)
@@ -698,10 +828,21 @@ public partial class GameManager
     {
         //クリアマスの制限チェック
         return Turn <= MaxTurn
-               && magicUsageCount <= magicUsageCountList[0]
-               && magicUsageCount <= magicUsageCountList[1]
-               && magicUsageCount <= magicUsageCountList[2]
-               && magicUsageCount <= magicUsageCountList[3];
+            /*魔法をすべて使用する制限
+            && magicUsageCount <= magicUsageCountList[0]
+            && magicUsageCount <= magicUsageCountList[1]
+            && magicUsageCount <= magicUsageCountList[2]
+            && magicUsageCount <= magicUsageCountList[3]*/;
+    }
+
+    /// <summary>
+    /// 魔法の使用制限をリセット
+    /// </summary>
+    public void ResetUseMagicLimit()
+    {
+        LimitReset();
+        ResetCheckMagicType();
+        InitEffectUI();
     }
 
     private BaseEffect EffectUI_Fire = null;

@@ -2,14 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 
 public class TitleManager : SingletonMonoBehaviour<TitleManager>
 {
     [SerializeField] private List<Transform> MagicPosition = new List<Transform>();
-    private CancellationTokenSource gameProgressCts;
-    private CancellationToken gameProgressCt;
 
+    //最後に非表示にするオブジェクト//
+    [SerializeField] private MeshRenderer titleGameObject;
+    [SerializeField] private GameObject[] explanatoryGameObjects;
+    
+    private CancellationTokenSource titleProgressCts;
+    private CancellationToken titleProgressCt;
 
     /// <summary>
     /// 魔法陣の発動を検知したか
@@ -32,11 +37,11 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
     private CancellationToken TitleProgressCancel()
     {
         //キャンセル
-        gameProgressCts?.Cancel();
+        titleProgressCts?.Cancel();
         //新しく作成
-        gameProgressCts = new CancellationTokenSource();
-        gameProgressCt = gameProgressCts.Token;
-        return gameProgressCt;
+        titleProgressCts = new CancellationTokenSource();
+        titleProgressCt = titleProgressCts.Token;
+        return titleProgressCt;
     }
 
     /// <summary>
@@ -47,6 +52,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         MagicPosition.ForEach(x => x.gameObject.SetActive(false));
         await UniTask.DelayFrame(1);
 
+        List<BaseEffect> activeEffects = new List<BaseEffect>();
         //Fire
         MagicPosition[0].gameObject.SetActive(true);
         var pos = MagicPosition[0].position + Vector3.up * 0.01f;
@@ -59,7 +65,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         token.ThrowIfCancellationRequested();
         //魔法発動を待機
         await UniTask.WaitUntil(() => isMagicActivation);
-        EffectManager.Instance.PlayEffect(EffectType.Fire_UI, pos, Quaternion.identity);
+        activeEffects.Add( EffectManager.Instance.PlayEffect(EffectType.Fire_UI, pos, Quaternion.identity));
         canUseMagicType = MagicType.NoneMagic; 
         //処理終了まで待機
         await UniTask.WaitUntil(() => !isMagicActivation);
@@ -83,7 +89,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         token.ThrowIfCancellationRequested();
         //魔法発動を待機
         await UniTask.WaitUntil(() => isMagicActivation);
-        EffectManager.Instance.PlayEffect(EffectType.Ice_UI, pos, Quaternion.identity);
+        activeEffects.Add(EffectManager.Instance.PlayEffect(EffectType.Ice_UI, pos, Quaternion.identity));
         canUseMagicType = MagicType.NoneMagic;
         //処理終了まで待機
         await UniTask.WaitUntil(() => !isMagicActivation);
@@ -108,7 +114,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         token.ThrowIfCancellationRequested();
         //魔法発動を待機
         await UniTask.WaitUntil(() => isMagicActivation);
-        EffectManager.Instance.PlayEffect(EffectType.Water_UI, pos, Quaternion.identity);
+        activeEffects.Add(EffectManager.Instance.PlayEffect(EffectType.Water_UI, pos, Quaternion.identity));
         canUseMagicType = MagicType.NoneMagic;
         //処理終了まで待機
         await UniTask.WaitUntil(() => !isMagicActivation);
@@ -133,7 +139,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         token.ThrowIfCancellationRequested();
         //魔法発動を待機
         await UniTask.WaitUntil(() => isMagicActivation);
-        EffectManager.Instance.PlayEffect(EffectType.Wind_UI, pos, Quaternion.identity);
+        activeEffects.Add(EffectManager.Instance.PlayEffect(EffectType.Wind_UI, pos, Quaternion.identity));
         canUseMagicType = MagicType.NoneMagic;
         //処理終了まで待機
         await UniTask.WaitUntil(() => !isMagicActivation);
@@ -141,11 +147,33 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
         EffectManager.Instance.PlayEffect(EffectType.Magic_Wind_releaseCircle, pos, Quaternion.identity);
         MagicPosition[3].gameObject.SetActive(false);
         InputManager.Instance.ResetMagicData(MagicType.Wind);
-        await UniTask.Delay(TimeSpan.FromSeconds(3));
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
 
-        //TODO:シーン移動
-        SoundManager.Instance.StopBGM(BgmHash).Forget();
-        SceneManager.Instance.SceneChange(SceneList.MainGame, true, true,false);
+        //表示されているオブジェクトを非表示に
+        //魔法のUIエフェクトを非表示
+        foreach (var baseEffect in activeEffects)
+        {
+            baseEffect.Stop();
+        }
+        //タイトルロゴを非表示
+        SoundManager.Instance.PlaySE(SEType.SE34);
+        DOVirtual.Float(1, 0, 2f, value =>
+        {
+            titleGameObject.material.SetFloat(nameID_Ratio,value);
+        });
+        
+        //説明文を非表示
+
+        foreach (var explanatoryGameObject in explanatoryGameObjects)
+        {
+            explanatoryGameObject.transform.DOScaleY(0, 0.25f);
+        }
+
+        await UniTask.Delay(TimeSpan.FromSeconds(4f));
+        
+        //シーン移動
+        //SoundManager.Instance.StopBGM(BgmHash).Forget();
+        SceneManager.Instance.SceneChange(SceneList.StageSelect, false, false,false,fadeTime:0f);
     }
 
     private void Start()
@@ -174,6 +202,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
     [SerializeField] private BasePlayerMagic _icePlayerMagic;
     [SerializeField] private BasePlayerMagic _waterPlayerMagic;
     [SerializeField] private BasePlayerMagic _windPlayerMagic;
+    private static readonly int nameID_Ratio = Shader.PropertyToID("_Ratio");
 
 
     /// <summary>
@@ -384,7 +413,7 @@ public class TitleManager : SingletonMonoBehaviour<TitleManager>
     void OnDestroy()
     {
         //GameObject破棄時にキャンセル実行
-        gameProgressCts?.Cancel();
+        titleProgressCts?.Cancel();
 
         RemoveInputEvent();
     }

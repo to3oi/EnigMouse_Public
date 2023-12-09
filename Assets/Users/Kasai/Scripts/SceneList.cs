@@ -6,5 +6,5 @@ public enum SceneList
     MainGame = 3,
     GameClear = 4,
     GameOver = 5,
-    TestScene1 = 6,
+    StageSelect = 6,
 }

@@ -24,12 +24,13 @@ public class SceneManager : SingletonMonoBehaviour<SceneManager>
     /// <param name="isFade">trueならシーン移動時にFadeOutを行う</param>
     /// <param name="isAlpha">trueならシーン移動時にFade用のImageのAlphaを255を設定し、移動後にFadeInを行う</param>
     /// <param name="isWhite">フェードする色を指定</param>
-    public async void SceneChange(SceneList list,bool isFade,bool isAlpha,bool isWhite = true)
+    public async void SceneChange(SceneList list,bool isFade,bool isAlpha,bool isWhite = true,float fadeTime = 1)
     {
         FadeImageColor(isWhite);
         SoundManager.Instance.AllStopSE().Forget();
         var sceneID = (int)list;
         sceneList = list;
+        _fadeTime = fadeTime;
         if (isFade)
         {
             FadeOut();
@@ -93,11 +94,11 @@ public class SceneManager : SingletonMonoBehaviour<SceneManager>
         _fadeColorToggle = colorMode;
         if(colorMode)
         {
-            GetCanvas.Instance.FadeImage.color = new Color(255, 255, 255, 0);
+            GetCanvas.Instance.FadeImage.color = new Color(255, 255, 255, GetCanvas.Instance.FadeImage.color.a * 255);
         }
         else
         {
-            GetCanvas.Instance.FadeImage.color = new Color(0, 0, 0, 0);
+            GetCanvas.Instance.FadeImage.color = new Color(0, 0, 0, GetCanvas.Instance.FadeImage.color.a * 255);
         }
     }
 }
