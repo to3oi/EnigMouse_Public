@@ -43,3 +43,4 @@ tomoya.ito.0517[]gmail.com
 |  [召喚魔法陣「MQOf SummonCircle Particle set」](https://mqofactory.booth.pm/items/4095231)  |
 |  [MQOf_particle_pack2](https://mqofactory.booth.pm/items/4329197)  |
 |  [【Unityアセット】魔法陣エフェクト](https://booth.pm/ja/items/2544734)  |
+|  [魔法のビンFBX](https://booth.pm/ja/items/2613302)  |
