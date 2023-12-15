@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using TMPro;
@@ -71,6 +70,12 @@ public partial class GameManager
         set { gameClear = value; }
     }
 
+    /// <summary>
+    /// エクストラ演出を実行、終了するスクリプト
+    /// </summary>
+    [SerializeField] private EXUnLockPerformance _exUnLockPerformance;
+
+    
     private CancellationTokenSource gameProgressCts;
     private CancellationToken gameProgressCt;
 
@@ -289,7 +294,6 @@ public partial class GameManager
         task.Add(MessageUpdate(messageAreas, textRootCanvasGroup, "Start", 1.5f, 0.25f));
         await UniTask.WhenAll(task);
 
-        ValueRetention.Instance.PlayedExtraPerformance = false;
         //最後にメッセージキャンバスを削除
         Destroy(messageCanvasBackGround.transform.parent.gameObject);
 
@@ -303,7 +307,11 @@ public partial class GameManager
 
         //キャンセラレーショントークンを発行
         //ゲームの進行を開始
-        BGMHash = SoundManager.Instance.PlayBGM(BGMType.BGM2);
+        BGMHash = SoundManager.Instance.PlayBGM(ValueRetention.Instance.PlayedExtraPerformance
+            ? BGMType.BGM6
+            : BGMType.BGM2);
+        ValueRetention.Instance.PlayedExtraPerformance = false;
+
         GameProgressStart(GameProgressCancel()).Forget();
     }
 
@@ -351,6 +359,7 @@ public partial class GameManager
                 Mouse.Instance.HideMouse();
                 GameOver().Forget();
             }
+
             //魔法をすべて使い切っていたら再生成する処理
             if (magicUsageCount <= magicUsageCountList[0]
                 && magicUsageCount <= magicUsageCountList[1]
@@ -400,17 +409,28 @@ public partial class GameManager
     /// <summary>
     /// ゲームオーバーの処理
     /// </summary>
+    bool gameOverProcess = false;
+
     public async UniTask GameOver()
     {
-        var token = GameProgressCancel();
-        InitEffectUI();
+        if (!gameOverProcess)
+        {
+            gameOverProcess = true;
+            var token = GameProgressCancel();
+            InitEffectUI();
 
-        //盤面の再生成とゲーム進行の開始
-        await StageManager.Instance.RegenerationStage();
-        //ネズミのリセット処理はStageObjectMouseのInitAnimation内で実行されます
+            //盤面の再生成とゲーム進行の開始
+            await StageManager.Instance.RegenerationStage();
+            //ネズミのリセット処理はStageObjectMouseのInitAnimation内で実行されます
 
-        //生成が終わったらスタート
-        GameProgressStart(token).Forget();
+            //生成が終わったらスタート
+            GameProgressStart(token).Forget();
+            gameOverProcess = false;
+        }
+        else
+        {
+            Debug.LogError("リセット処理が複数回呼ばれています");
+        }
     }
 
     /// <summary>
@@ -489,12 +509,12 @@ public partial class GameManager
             //ネズミがキョロキョロ
             await Mouse.Instance.InitExtraPerformance();
         }));
-        
+
         SoundManager.Instance.PlaySE(SEType.GameClear);
-        task.Add( DOVirtual.Float(_gameTimer.TimeLimit, StageManager.Instance.MinutesForTimeOver * 60, 3.5f,
+        task.Add(DOVirtual.Float(_gameTimer.TimeLimit, StageManager.Instance.MinutesForTimeOver * 60, 3.5f,
             value => { _timeSubject.OnNext(value); }).ToUniTask());
         await UniTask.WhenAll(task);
-        
+
         await UniTask.Delay(TimeSpan.FromSeconds(1f));
 
         //ネズミが画面外に移動する
@@ -504,6 +524,11 @@ public partial class GameManager
         await StageManager.Instance.ExitDynamicStageObject4ExtraPerformance();
 
         await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+
+        //鍵が外れる演出を再生
+        _exUnLockPerformance.StartEXUnLockPerformance();
+        await UniTask.WaitUntil(() => _exStageUnLocked);
+
 
         //背景を横から挿入
         _hardModeBackGround.SetActive(true);
@@ -524,6 +549,17 @@ public partial class GameManager
         //シーン移動
         SceneManager.Instance.SceneChange(SceneList.MainGame, false, false, isWhite: false, fadeTime: 0);
     }
+    
+    private bool _exStageUnLocked = false;
+
+    /// <summary>
+    /// 鍵をアンロックする演出が終了間近になったら呼び出す関数
+    /// </summary>
+    public void CompletEXUnLockPerformance()
+    {
+        _exStageUnLocked = true;
+    }
+
 
     /// <summary>
     /// ネズミの座標でマスク処理をする

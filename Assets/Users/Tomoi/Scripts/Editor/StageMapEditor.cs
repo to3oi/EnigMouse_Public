@@ -15,6 +15,9 @@ public class StageMapEditor : EditorWindow
     private int index = 0;
     private Vector2 boxSizeOffset = new Vector2(100, 350);
     private Object stageSelectTexture;
+    private Object stageSelectMaskTexture;
+
+    private Vector2 scrollPosition = Vector2.zero;
 
 
     [MenuItem("CustomEditor/Map")]
@@ -48,6 +51,7 @@ public class StageMapEditor : EditorWindow
         StageMaps.StageMapEditorList[_index].StageMaxTurn = 4;
         StageMaps.StageMapEditorList[_index].MinutesForTimeOver = 5;
         StageMaps.StageMapEditorList[_index].StageSelectTexture = null;
+        StageMaps.StageMapEditorList[_index].StageSelectMaskTexture = null;
     }
 
     /// <Summary>
@@ -121,11 +125,12 @@ public class StageMapEditor : EditorWindow
         //ステージの名前を設定
         GUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("ステージの名前");
-        StageMaps.StageMapEditorList[index].StageName = EditorGUILayout.TextField(StageMaps.StageMapEditorList[index].StageName);
+        StageMaps.StageMapEditorList[index].StageName =
+            EditorGUILayout.TextField(StageMaps.StageMapEditorList[index].StageName);
         GUILayout.EndHorizontal();
         GUILayout.EndVertical();
 
-        
+
         GUILayout.BeginVertical();
         GUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("時間制限(分)");
@@ -136,8 +141,9 @@ public class StageMapEditor : EditorWindow
             StageMaps.StageMapEditorList[index].MinutesForTimeOver = 1;
             Debug.LogError("制限時間を1分以下にはできません");
         }
+
         GUILayout.EndHorizontal();
-        
+
         //StageSelectTextureの設定
         GUILayout.BeginHorizontal();
         EditorGUILayout.LabelField("ステージ選択画面の画像");
@@ -145,108 +151,118 @@ public class StageMapEditor : EditorWindow
         stageSelectTexture = EditorGUILayout.ObjectField(stageSelectTexture, typeof(Texture), true);
         StageMaps.StageMapEditorList[index].StageSelectTexture = stageSelectTexture as Texture;
         GUILayout.EndHorizontal();
+
+        GUILayout.BeginHorizontal();
+        //StageSelectTextureの設定
+        EditorGUILayout.LabelField("ステージ選択画面のマスク画像");
+        stageSelectMaskTexture = StageMaps.StageMapEditorList[index].StageSelectMaskTexture;
+        stageSelectMaskTexture = EditorGUILayout.ObjectField(stageSelectMaskTexture, typeof(Texture), true);
+        StageMaps.StageMapEditorList[index].StageSelectMaskTexture = stageSelectMaskTexture as Texture;
+        GUILayout.EndHorizontal();
+
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
         GUILayout.EndHorizontal();
 
 
         GUILayout.Box("", GUILayout.ExpandWidth(true), GUILayout.Height(4));
-        if (_editor != null)
         {
-            //StageMapsの要素の表示・変更処理
-            var database = (StageMaps)_editor.target;
-            //スクロールの処理
-            EditorGUILayout.Space();
-
-            //StageMapsの要素を表示
-            //縦揃え
-            EditorGUILayout.BeginVertical();
-            for (int y = 0; y < StageMaps.StageMapEditorList[index].y.Count; y++)
+            if (_editor != null)
             {
-                //横揃え
-                EditorGUILayout.BeginHorizontal();
-                for (int x = 0; x < StageMaps.StageMapEditorList[index].y[y].x.Count; x++)
+                //StageMapsの要素の表示・変更処理
+                var database = (StageMaps)_editor.target;
+                //スクロールの処理
+                EditorGUILayout.Space();
+
+                //StageMapsの要素を表示
+                //縦揃え
+                scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+                EditorGUILayout.BeginVertical();
+                for (int y = 0; y < StageMaps.StageMapEditorList[index].y.Count; y++)
                 {
-                    EditorGUILayout.BeginVertical(GUI.skin.box);
-                    var objectType = StageMaps.StageMapEditorList[index].y[y].x[x];
-                    objectType = (StageObjectType)EditorGUILayout.EnumPopup(objectType);
-                    StageMaps.StageMapEditorList[index].y[y].x[x] = objectType;
-                    //中央揃え
-                    GUILayout.FlexibleSpace();
-                    // TODO:オブジェクトのデータが揃ったら`objectType.ToString()`をオブジェクトの画像に差し替え
-                    Texture texture =
-                        AssetDatabase.LoadAssetAtPath($"Assets/Resources/EditorSprite/{objectType}.png", 
-                            typeof(Texture)) as Texture;
-                    GUILayout.Box(texture, GUILayout.Width((position.size.x - boxSizeOffset.x) / 6),
-                        GUILayout.Height((position.size.y - boxSizeOffset.y) / 6));
-                    GUILayout.FlexibleSpace();
-                    EditorGUILayout.EndVertical();
+                    //横揃え
+                    EditorGUILayout.BeginHorizontal();
+                    for (int x = 0; x < StageMaps.StageMapEditorList[index].y[y].x.Count; x++)
+                    {
+                        EditorGUILayout.BeginVertical(GUI.skin.box);
+                        var objectType = StageMaps.StageMapEditorList[index].y[y].x[x];
+                        objectType = (StageObjectType)EditorGUILayout.EnumPopup(objectType);
+                        StageMaps.StageMapEditorList[index].y[y].x[x] = objectType;
+                        //中央揃え
+                        GUILayout.FlexibleSpace();
+                        Texture texture =
+                            AssetDatabase.LoadAssetAtPath($"Assets/Resources/EditorSprite/{objectType}.png",
+                                typeof(Texture)) as Texture;
+                        GUILayout.Box(texture, GUILayout.Width((position.size.x - boxSizeOffset.x) / 6),
+                            GUILayout.Height((position.size.y - boxSizeOffset.y) / 6));
+                        GUILayout.FlexibleSpace();
+                        EditorGUILayout.EndVertical();
+                    }
+
+                    EditorGUILayout.EndHorizontal();
                 }
+
+                EditorGUILayout.EndVertical();
+
+                Undo.RecordObject(database, "");
+
+                //スクロールの処理
+                EditorGUILayout.Space();
+                EditorGUILayout.EndScrollView();
+
+                //要素の追加と削除
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("保存", GUILayout.Height(30), GUILayout.Width(60)))
+                {
+                    // ScriptableObjectのパスは 'Assets/' から始まる相対パス
+                    ScriptableObject obj =
+                        AssetDatabase.LoadAssetAtPath("Assets/Resources/StageMaps.asset", typeof(ScriptableObject)) as
+                            ScriptableObject;
+                    // 変更を通知
+                    EditorUtility.SetDirty(obj);
+
+                    AssetDatabase.SaveAssets();
+                }
+
+                if (GUILayout.Button("+", GUILayout.Height(30), GUILayout.Width(30)))
+                {
+                    if (StageMaps != null)
+                    {
+                        database.StageMapEditorList.Add(new Map.Map(new List<X>(6)));
+                        ResetList(database.StageMapEditorList.Count - 1);
+                        index = database.StageMapEditorList.Count - 1;
+                        EditorUtility.SetDirty(StageMaps);
+                        AssetDatabase.SaveAssets();
+                    }
+                }
+
+                EditorGUILayout.Space();
+                if (GUILayout.Button("-", GUILayout.Height(30), GUILayout.Width(30)))
+                {
+                    if (StageMaps != null)
+                    {
+                        if (database.StageMapEditorList.Count <= 1)
+                        {
+                            Debug.Log($"Listを空にすることはできません");
+                        }
+                        else
+                        {
+                            database.StageMapEditorList.RemoveAt(index);
+                            if (database.StageMapEditorList.Count - 1 < index)
+                            {
+                                index = database.StageMapEditorList.Count - 1;
+                            }
+
+                            EditorUtility.SetDirty(StageMaps);
+                        }
+                    }
+                }
+
+                EditorUtility.SetDirty(StageMaps);
 
                 EditorGUILayout.EndHorizontal();
             }
-
-            EditorGUILayout.EndVertical();
-
-            Undo.RecordObject(database, "");
-
-            //スクロールの処理
-            EditorGUILayout.Space();
-
-
-            //要素の追加と削除
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button("保存", GUILayout.Height(30), GUILayout.Width(60)))
-            {
-                // ScriptableObjectのパスは 'Assets/' から始まる相対パス
-                ScriptableObject obj =
-                    AssetDatabase.LoadAssetAtPath("Assets/Resources/StageMaps.asset", typeof(ScriptableObject)) as
-                        ScriptableObject;
-                // 変更を通知
-                EditorUtility.SetDirty(obj);
-
-                AssetDatabase.SaveAssets();
-            }
-
-            if (GUILayout.Button("+", GUILayout.Height(30), GUILayout.Width(30)))
-            {
-                if (StageMaps != null)
-                {
-                    database.StageMapEditorList.Add(new Map.Map(new List<X>(6)));
-                    ResetList(database.StageMapEditorList.Count - 1);
-                    index = database.StageMapEditorList.Count - 1;
-                    EditorUtility.SetDirty(StageMaps);
-                    AssetDatabase.SaveAssets();
-                }
-            }
-
-            EditorGUILayout.Space();
-            if (GUILayout.Button("-", GUILayout.Height(30), GUILayout.Width(30)))
-            {
-                if (StageMaps != null)
-                {
-                    if (database.StageMapEditorList.Count <= 1)
-                    {
-                        Debug.Log($"Listを空にすることはできません");
-                    }
-                    else
-                    {
-                        database.StageMapEditorList.RemoveAt(index);
-                        if (database.StageMapEditorList.Count - 1 < index)
-                        {
-                            index = database.StageMapEditorList.Count - 1;
-                        }
-
-                        EditorUtility.SetDirty(StageMaps);
-                    }
-                }
-            }
-
-            EditorUtility.SetDirty(StageMaps);
-
-            EditorGUILayout.EndHorizontal();
-            EditorGUILayout.Space();
         }
     }
 }

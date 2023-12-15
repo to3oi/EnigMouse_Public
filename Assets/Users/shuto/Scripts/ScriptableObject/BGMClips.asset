@@ -23,3 +23,5 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 9387ae0035a535f4db136646c67e3433, type: 3}
   - BGMType: 5
     clip: {fileID: 8300000, guid: 2e6fd9b6dfc69d646a6e9787619e0baf, type: 3}
+  - BGMType: 6
+    clip: {fileID: 8300000, guid: e9c90218c435c1e4ba8a6b4c2e4dcfe1, type: 3}

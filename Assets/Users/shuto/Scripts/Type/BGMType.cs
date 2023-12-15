@@ -5,4 +5,5 @@ public enum BGMType
     BGM3 = 3,
     BGM4 = 4,
     BGM5 = 5,
+    BGM6 = 6,
 }

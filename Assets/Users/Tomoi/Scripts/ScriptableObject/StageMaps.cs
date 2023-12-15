@@ -49,6 +49,7 @@ namespace Map
         public int StageMaxTurn = 4;
         public string StageName;
         public Texture StageSelectTexture;
+        public Texture StageSelectMaskTexture;
         public bool isHardMode = false;
         public int MinutesForTimeOver = 5;
         public List<X> y = new List<X>(6);

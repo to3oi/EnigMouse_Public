@@ -17,18 +17,22 @@ MonoBehaviour:
     StageName: "\u3075\u308F\u308F\u6E13\u8C37"
     StageSelectTexture: {fileID: 2800000, guid: 78c5122fe030ecc40a4f17c82c449106,
       type: 3}
+    StageSelectMaskTexture: {fileID: 2800000, guid: 0ec77534c07f5ad4ea85f207b8425de2,
+      type: 3}
     isHardMode: 0
     MinutesForTimeOver: 5
     y:
     - x: 6d0000006d0000006d000000640000006400000066000000
     - x: 6d0000006d00000064000000640000006400000066000000
     - x: 640000006400000069000000640000006400000066000000
-    - x: 640000006400000064000000640000007100000068000000
+    - x: 640000006400000064000000640000006400000068000000
     - x: 6f0000006c000000640000006b0000006e00000064000000
     - x: 640000006400000070000000640000006400000064000000
   - StageMaxTurn: 4
     StageName: "\u3042\u3061\u3061\u6EB6\u5CA9"
     StageSelectTexture: {fileID: 2800000, guid: faf3f79649595e34d9826ac8e790f9a4,
+      type: 3}
+    StageSelectMaskTexture: {fileID: 2800000, guid: 9c0015c3cc27eb2479fc03a3ee726ec0,
       type: 3}
     isHardMode: 0
     MinutesForTimeOver: 5
@@ -43,6 +47,8 @@ MonoBehaviour:
     StageName: "\u3081\u3089\u3089\u5C71\u5CB3"
     StageSelectTexture: {fileID: 2800000, guid: c0862a3e767f53b43ac6354197b12e9c,
       type: 3}
+    StageSelectMaskTexture: {fileID: 2800000, guid: 0c9253018edbad3469dd7a5681d5028d,
+      type: 3}
     isHardMode: 0
     MinutesForTimeOver: 5
     y:
@@ -56,6 +62,8 @@ MonoBehaviour:
     StageName: "\u3064\u308B\u308B\u6E9C\u6C60"
     StageSelectTexture: {fileID: 2800000, guid: 3b4136db17812ed45bac905fbfb81e1b,
       type: 3}
+    StageSelectMaskTexture: {fileID: 2800000, guid: a272e3b7dad35ff4bb3174ec122bb8dd,
+      type: 3}
     isHardMode: 0
     MinutesForTimeOver: 5
     y:
@@ -66,8 +74,10 @@ MonoBehaviour:
     - x: 6400000069000000640000006a000000660000006a000000
     - x: 6d0000006900000070000000660000006a0000006d000000
   - StageMaxTurn: 8
-    StageName: "\u9AD8\u96E3\u6613\u5EA6\u30B9\u30C6\u30FC\u30B8"
+    StageName: "EX\u30B9\u30C6\u30FC\u30B8"
     StageSelectTexture: {fileID: 2800000, guid: f4a4346fd0899fb45a957999b7a71f75,
+      type: 3}
+    StageSelectMaskTexture: {fileID: 2800000, guid: 03b527a2c7d426f438eb9cb85abe293f,
       type: 3}
     isHardMode: 1
     MinutesForTimeOver: 8

@@ -37,6 +37,8 @@ public enum SEType
     SE35     = 34,
     SE36     = 35,
     SE37     = 36,
+    SE38     = 37,
+    SE39     = 38,
     
     #region old
     GameStart = 0,

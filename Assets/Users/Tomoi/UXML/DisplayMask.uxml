@@ -17,6 +17,6 @@
             <ui:Label text="Left" display-tooltip-when-elided="true" name="Left_Label" style="color: rgb(0, 0, 0); font-size: 24px; -unity-font-style: normal; -unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/LINESeedJP_TTF_Rg%20SDF.asset?fileID=11400000&amp;guid=619ed9a6f259b24419237b705fb3bf55&amp;type=2#LINESeedJP_TTF_Rg SDF&apos;);" />
             <ui:Slider picking-mode="Ignore" value="0" high-value="720" name="Left_Value" view-data-key="Left_Value" style="opacity: 1; color: rgb(255, 255, 255);" />
         </ui:GroupBox>
-        <ui:Button text="Next" display-tooltip-when-elided="true" name="Next" view-data-key="Next" style="margin-left: 80%; -unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/LINESeedJP_TTF_Rg%20SDF.asset?fileID=11400000&amp;guid=619ed9a6f259b24419237b705fb3bf55&amp;type=2#LINESeedJP_TTF_Rg SDF&apos;); -unity-font-style: normal; color: rgb(255, 255, 255);" />
+        <ui:Button text="Next" display-tooltip-when-elided="true" name="Next" view-data-key="Next" style="margin-left: 80%; -unity-font-definition: url(&apos;project://database/Assets/Users/Tomoi/Font/LINESeedJP_TTF_Rg%20SDF.asset?fileID=11400000&amp;guid=619ed9a6f259b24419237b705fb3bf55&amp;type=2#LINESeedJP_TTF_Rg SDF&apos;); -unity-font-style: normal; color: rgb(0, 0, 0);" />
     </ui:GroupBox>
 </ui:UXML>

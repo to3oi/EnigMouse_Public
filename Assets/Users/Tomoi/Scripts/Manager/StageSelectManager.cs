@@ -65,7 +65,7 @@ public class StageSelectManager : SingletonMonoBehaviour<StageSelectManager>
 
             var g = new GameObject($"StageSelectPanel{i}");
             g.transform.position = _stageSelectPoints[i].position;
-            StageSelectPanel.Init(mapList[i].StageSelectTexture, i, g.transform,mapList[i].isHardMode);
+            StageSelectPanel.Init(mapList[i].StageSelectTexture,mapList[i].StageSelectMaskTexture, i, g.transform,mapList[i].isHardMode);
             StageSelectPanel.transform.parent = g.transform;
             StageSelectPanel.transform.localPosition = Vector3.zero;
             task.Add(StageSelectPanel.InitAnimation(i / 5f));
@@ -118,7 +118,7 @@ public class StageSelectManager : SingletonMonoBehaviour<StageSelectManager>
         //暗転
         GetCanvas.Instance.FadeImage.color = Color.black;
         SoundManager.Instance.PlaySE(SEType.SE33);
-        await UniTask.Delay(TimeSpan.FromSeconds(1));
+        await UniTask.Delay(TimeSpan.FromSeconds(2));
 
         //シーン移動
         SceneManager.Instance.SceneChange(SceneList.MainGame, false, true, isWhite: false, fadeTime: 0);
@@ -137,7 +137,15 @@ public class StageSelectManager : SingletonMonoBehaviour<StageSelectManager>
         _selectedStageSelectPanel = stageSelectPanel;
         ValueRetention.Instance.StageIndex = _selectedStageSelectPanel.MapIndex;
     }
-
+    /// <summary>
+    /// Outlineを非同期で表示
+    /// </summary>
+    /// <param name="pos"></param>
+    /// <param name="magicType"></param>
+    public void SetOutline(Vector2 pos, MagicType magicType)
+    {
+        GetStageSelectPanel(pos)?.SetOutline(magicType);
+    }
 
     #region 魔法関係
 
@@ -352,6 +360,7 @@ public class StageSelectManager : SingletonMonoBehaviour<StageSelectManager>
 
     private void AddInputEvent()
     {
+        InputManager.Instance.MagicPositionAlways += SetOutline;
         InputManager.Instance.Magic_StartCoordinatePause += Magic_StartCoordinatePause;
         InputManager.Instance.Magic_CoordinatePaused += Magic_CoordinatePaused;
         InputManager.Instance.Magic_PauseCompleted += Magic_PauseCompleted_Start;
@@ -359,6 +368,7 @@ public class StageSelectManager : SingletonMonoBehaviour<StageSelectManager>
 
     private void RemoveInputEvent()
     {
+        InputManager.Instance.MagicPositionAlways -= SetOutline;
         InputManager.Instance.Magic_StartCoordinatePause -= Magic_StartCoordinatePause;
         InputManager.Instance.Magic_CoordinatePaused -= Magic_CoordinatePaused;
         InputManager.Instance.Magic_PauseCompleted -= Magic_PauseCompleted_Start;

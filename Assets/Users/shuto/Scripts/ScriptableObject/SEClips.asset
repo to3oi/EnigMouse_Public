@@ -87,3 +87,7 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 0d624209a321ee64aa20d1c6abd5236f, type: 3}
   - SEType: 36
     clip: {fileID: 8300000, guid: 9456a743f6b9a69488f86e08eb0f7ad6, type: 3}
+  - SEType: 37
+    clip: {fileID: 8300000, guid: 0d957aa7156283d4a9db78060e452135, type: 3}
+  - SEType: 38
+    clip: {fileID: 8300000, guid: 7c6edcc35ecfe2c46818a494aa3a1016, type: 3}

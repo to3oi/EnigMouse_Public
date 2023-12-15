@@ -4,6 +4,9 @@
     "m_ObjectId": "f2c9291c4cf440d588fa90ebc2b05b6f",
     "m_Properties": [
         {
+            "m_Id": "bfd8cfaed0f740a281d12884661a1913"
+        },
+        {
             "m_Id": "44ac19d039d04424ab82e299e88b1277"
         },
         {
@@ -1358,9 +1361,9 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -690.0,
-            "y": -267.0000305175781,
-            "width": 207.99993896484376,
+            "x": -735.0,
+            "y": 158.0,
+            "width": 208.0,
             "height": 302.0
         }
     },
@@ -1684,10 +1687,10 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -1216.0001220703125,
-            "y": -1562.0001220703125,
+            "x": -1209.0,
+            "y": -243.0,
             "width": 208.0,
-            "height": 435.0001220703125
+            "height": 435.0
         }
     },
     "m_Slots": [
@@ -2061,7 +2064,7 @@
     "m_Type": "UnityEditor.ShaderGraph.Vector1MaterialSlot",
     "m_ObjectId": "9ec97769ba854e54a82e3bab582e0afa",
     "m_Id": 0,
-    "m_DisplayName": "Ratio",
+    "m_DisplayName": "FireRatio",
     "m_SlotType": 1,
     "m_Hidden": false,
     "m_ShaderOutputName": "Out",
@@ -2282,9 +2285,9 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -1381.000244140625,
-            "y": -1562.0001220703125,
-            "width": 139.0,
+            "x": -1374.0,
+            "y": -243.0,
+            "width": 150.0,
             "height": 34.0
         }
     },
@@ -2368,10 +2371,10 @@
     "m_Guid": {
         "m_GuidSerialized": "2aedddf4-8a02-488f-9b87-21829837e3f1"
     },
-    "m_Name": "Ratio",
+    "m_Name": "FireRatio",
     "m_DefaultRefNameVersion": 1,
-    "m_RefNameGeneratedByDisplayName": "Ratio",
-    "m_DefaultReferenceName": "_Ratio",
+    "m_RefNameGeneratedByDisplayName": "FireRatio",
+    "m_DefaultReferenceName": "_FireRatio",
     "m_OverrideReferenceName": "",
     "m_GeneratePropertyBlock": true,
     "m_UseCustomSlotLabel": false,
@@ -2438,6 +2441,35 @@
     },
     "m_Labels": [],
     "m_Channel": 0
+}
+
+{
+    "m_SGVersion": 0,
+    "m_Type": "UnityEditor.ShaderGraph.Internal.Texture2DShaderProperty",
+    "m_ObjectId": "bfd8cfaed0f740a281d12884661a1913",
+    "m_Guid": {
+        "m_GuidSerialized": "944ae1a4-652a-4325-95b3-5c32280bac97"
+    },
+    "m_Name": "MaskTexture",
+    "m_DefaultRefNameVersion": 1,
+    "m_RefNameGeneratedByDisplayName": "MaskTexture",
+    "m_DefaultReferenceName": "_MaskTexture",
+    "m_OverrideReferenceName": "",
+    "m_GeneratePropertyBlock": true,
+    "m_UseCustomSlotLabel": false,
+    "m_CustomSlotLabel": "",
+    "m_Precision": 0,
+    "overrideHLSLDeclaration": false,
+    "hlslDeclarationOverride": 2,
+    "m_Hidden": false,
+    "m_Value": {
+        "m_SerializedTexture": "{\"texture\":{\"fileID\":2800000,\"guid\":\"78c5122fe030ecc40a4f17c82c449106\",\"type\":3}}",
+        "m_Guid": ""
+    },
+    "isMainTexture": false,
+    "useTilingAndOffset": false,
+    "m_Modifiable": true,
+    "m_DefaultType": 0
 }
 
 {
@@ -2915,6 +2947,9 @@
             "m_Id": "186b763f4c5241d3bb7563f81c2b0b19"
         },
         {
+            "m_Id": "bfd8cfaed0f740a281d12884661a1913"
+        },
+        {
             "m_Id": "44ac19d039d04424ab82e299e88b1277"
         },
         {
@@ -3082,9 +3117,9 @@
         "m_Expanded": true,
         "m_Position": {
             "serializedVersion": "2",
-            "x": -430.0002136230469,
-            "y": -1478.0001220703125,
-            "width": 208.00003051757813,
+            "x": -423.0,
+            "y": -159.0,
+            "width": 208.0,
             "height": 302.0
         }
     },
